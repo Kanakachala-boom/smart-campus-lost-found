@@ -1,0 +1,786 @@
+SMART LOST AND FOUND MANAGEMENT SYSTEM
+Complete Project Context / Specification
+
+============================================================
+1. PROJECT TITLE
+============================================================
+
+Primary title:
+Smart Lost and Found Management System
+
+Alternative formal title:
+AI-Based Smart Lost and Found Management System
+
+Project category:
+Application / Prototype Type
+
+
+============================================================
+2. PROBLEM STATEMENT
+============================================================
+
+In colleges and other institutions, students frequently lose personal
+belongings such as ID cards, wallets, keys, books, electronic devices,
+certificates, bags, and other valuables.
+
+Currently, lost-and-found management is often handled through informal
+methods such as:
+- Asking friends or classmates
+- Posting messages in WhatsApp groups
+- Informing security staff
+- Checking notice boards
+- Manually maintaining lost-and-found registers
+
+These methods are inefficient because information becomes scattered,
+difficult to search, and may not reach the person who actually lost the
+item.
+
+There is therefore a need for a centralized digital system that allows
+users to report lost and found items, search for matching items, and
+communicate regarding their recovery.
+
+
+============================================================
+3. PROPOSED SOLUTION
+============================================================
+
+The proposed Smart Lost and Found Management System is a centralized
+platform for managing lost and found belongings within a college or
+institution.
+
+The system allows users to:
+1. Register and log in.
+2. Report an item as LOST.
+3. Report an item as FOUND.
+4. Upload an image of the item.
+5. Provide details such as:
+   - Item name
+   - Category
+   - Description
+   - Location
+   - Date/time
+   - Identifying characteristics
+6. Search and filter reported items.
+7. Find potentially matching lost/found reports.
+8. Contact the person associated with a matching item through the
+   appropriate workflow.
+9. Submit a claim for an item.
+10. Allow an administrator to verify and manage reports and claims.
+
+
+============================================================
+4. MAIN IDEA / WORKFLOW
+============================================================
+
+User loses an item
+        |
+        v
+Reports it in the system
+        |
+        v
+Another user finds an item
+        |
+        v
+Reports the found item
+        |
+        v
+System compares the reports
+        |
+        v
+Potential match is identified
+        |
+        v
+Relevant user receives a notification
+        |
+        v
+Claim / ownership verification
+        |
+        v
+Item is returned to rightful owner
+
+
+============================================================
+5. IMPORTANT NOTIFICATION REQUIREMENT
+============================================================
+
+Notifications must be USER-SPECIFIC.
+
+Only the user who is directly relevant to a particular event/match
+should receive that notification. There should be NO global notification
+where every registered user receives a potential-match notification.
+
+Example:
+
+Student A reports:
+- Lost: Black wallet
+- Location: Canteen
+- Date: 30 Aug
+
+Student B reports:
+- Found: Black wallet
+- Location: Canteen
+- Date: 30 Aug
+
+If the matching system identifies a potential match:
+
+Student A receives:
+"Potential match found for your lost item: Black wallet."
+
+Student B should NOT receive a general potential-match notification.
+
+If someone submits a claim for Student B's found item, Student B can
+receive an event-specific notification such as:
+"Someone has submitted a claim for the item you reported."
+
+All unrelated users receive no notification.
+
+Implementation concept:
+
+Notification
+- notification_id
+- user_id
+- message
+- type
+- item_id
+- is_read
+- created_at
+
+Every notification must be associated with a specific user_id.
+
+
+============================================================
+6. KEY FEATURES
+============================================================
+
+6.1 User Registration and Login
+- Name
+- Student/Staff ID
+- Email
+- Phone number
+- Password
+- Secure authentication
+
+6.2 Lost Item Reporting
+A user can create a lost-item report containing:
+- Item name
+- Category
+- Description
+- Location
+- Date/time
+- Identifying characteristics
+- Image (if available)
+
+Example:
+Item: Black Wallet
+Category: Personal Accessories
+Location: College Canteen
+Date: 28 August 2026
+Description: Black leather wallet containing college ID card.
+
+6.3 Found Item Reporting
+A user who finds an unidentified item can report:
+- Item name
+- Category
+- Description
+- Location
+- Date/time
+- Image
+- Other relevant details
+
+Example:
+Item: Bluetooth Earbuds
+Location: Library – 2nd Floor
+Date: 28 August 2026
+Description: White earbuds found near a study table.
+
+6.4 Smart Matching
+The smart component compares lost and found reports using factors
+such as:
+- Item category
+- Item name
+- Description
+- Location
+- Date/time
+- Colour
+- Brand
+- Other identifying characteristics
+- Image, if implemented
+
+The system generates a match score or ranks potential matches.
+
+6.5 Search and Filtering
+Users can search/filter using:
+- Item name
+- Category
+- Location
+- Date
+- Status
+
+Possible categories:
+- Electronics
+- Documents
+- Accessories
+- Books
+- Bags
+- Keys
+- Other
+
+Possible locations:
+- Library
+- Canteen
+- Classroom
+- Parking area
+- Hostel
+- Laboratory
+- Auditorium
+
+6.6 Claim and Verification
+To prevent false claims, users should provide identifying information
+that was not publicly displayed in the report.
+
+Possible verification details:
+- Unique marks
+- Model
+- Case details
+- Contents
+- Serial/identification information
+- Other private identifying characteristics
+
+A claim should be accepted only after appropriate verification.
+
+6.7 Item Status
+Lost item lifecycle:
+Lost -> Potential Match -> Claimed -> Returned
+
+Found item lifecycle:
+Found -> Potential Match -> Claimed -> Returned
+
+6.8 Notifications
+Notifications are user-specific and event-specific:
+- Potential match notification to the relevant lost-item owner
+- Claim notification to the relevant finder
+- Verification/result notification where appropriate
+- Return/status notification where appropriate
+
+6.9 Admin Module
+Admin can:
+- View users
+- View lost reports
+- View found reports
+- Remove inappropriate/fake reports
+- Verify claims
+- Manage reports
+- Mark items as returned
+- Manage suspicious reports/accounts
+- View statistics
+
+
+============================================================
+7. SMART MATCHING DETAILS
+============================================================
+
+The system should not be presented as only a CRUD website. The main
+smart component is the automated lost-found matching mechanism.
+
+Instead of:
+"User manually searches every found item."
+
+The system does:
+"Lost report -> automated matching -> ranked potential matches ->
+user-specific notification -> verification"
+
+Possible implementation levels:
+
+LEVEL 1 - Basic:
+- Category matching
+- Location matching
+- Date/time matching
+
+LEVEL 2 - Better:
+- Description similarity
+- Keyword matching
+- Weighted match score
+
+LEVEL 3 - Advanced:
+- Image-based similarity / computer vision
+
+For a 5th-semester minor project, Level 1 + Level 2 is practical.
+Level 3 can be an optional enhancement depending on time and team
+capability.
+
+Example:
+
+Lost:
+Black Samsung wallet
+Lost near Canteen
+28 August
+
+Found:
+Black wallet
+Found near Canteen
+28 August
+
+The system identifies this as a high-probability match.
+
+
+============================================================
+8. IMAGE-BASED MATCHING (OPTIONAL ADVANCED FEATURE)
+============================================================
+
+If implemented, uploaded images of lost/found objects can be compared
+using image similarity.
+
+Example:
+Lost item image <-> Found item image
+
+The system calculates visual similarity and identifies possible
+matches.
+
+IMPORTANT:
+Image matching should be treated as assistance, not proof of ownership.
+Final ownership should still require verification.
+
+
+============================================================
+9. EXAMPLE END-TO-END USE CASE
+============================================================
+
+Student A loses a black water bottle near the college auditorium.
+
+Student A reports:
+- Black Milton bottle
+- Auditorium
+- 30 August
+- Sticker on the side
+
+Student B later finds a black bottle near the auditorium.
+
+Student B reports:
+- Black water bottle
+- Auditorium
+- 30 August
+- Sticker on the side
+
+The matching engine compares the two reports and calculates a high
+similarity score.
+
+Student A receives:
+"Potential Match Found"
+
+Student A checks the information and submits a claim.
+
+The claim goes through verification.
+
+After successful verification:
+Status -> Returned
+
+
+============================================================
+10. TECHNOLOGY STACK
+============================================================
+
+Frontend:
+React.js
+
+Backend:
+FastAPI + Python
+
+Database:
+MySQL
+
+API communication:
+REST API
+
+Authentication:
+JWT-based authentication
+
+Smart Matching:
+Python-based matching logic integrated with FastAPI
+
+Database access:
+FastAPI backend communicates with MySQL
+
+Possible image storage:
+Local storage or cloud storage depending on implementation.
+
+
+============================================================
+11. SYSTEM ARCHITECTURE
+============================================================
+
+                    +-------------------+
+                    |       USER        |
+                    +---------+---------+
+                              |
+                              v
+                    +-------------------+
+                    |     React.js      |
+                    |     Frontend      |
+                    +---------+---------+
+                              |
+                         REST APIs
+                              |
+                              v
+                    +-------------------+
+                    |      FastAPI      |
+                    |      Backend      |
+                    +---------+---------+
+                              |
+              +---------------+---------------+
+              |               |               |
+              v               v               v
+       +------------+  +-------------+  +-------------+
+       |    Auth    |  | Lost/Found  |  |   Smart     |
+       |   Module   |  |   Module    |  |  Matching   |
+       +------------+  +-------------+  |   Engine    |
+                                        +------+------+
+                                               |
+                                               v
+                                      +----------------+
+                                      | User-specific  |
+                                      | Notifications  |
+                                      +-------+--------+
+                                              |
+                                              v
+                                      +----------------+
+                                      |     MySQL      |
+                                      |    Database    |
+                                      +----------------+
+
+
+============================================================
+12. PROJECT MODULE DIVISION FOR 4 MEMBERS
+============================================================
+
+The project should be divided into four substantial modules so each
+member has a clear responsibility and can explain their work during
+the viva.
+
+------------------------------------------------------------
+MEMBER 1 - FRONTEND & USER MANAGEMENT
+------------------------------------------------------------
+
+Technology:
+React.js
+
+Responsibilities:
+- Design React application structure
+- Login page
+- Registration page
+- User dashboard
+- User profile
+- Lost item reporting UI
+- Found item reporting UI
+- Search and filter UI
+- Item details page
+- Responsive UI
+- Connect frontend with FastAPI APIs
+
+Main modules:
+Authentication UI + User Dashboard + Lost/Found UI
+
+Main responsibility:
+User interaction and frontend experience.
+
+
+------------------------------------------------------------
+MEMBER 2 - BACKEND & AUTHENTICATION
+------------------------------------------------------------
+
+Technology:
+FastAPI + Python
+
+Responsibilities:
+- FastAPI project structure
+- Registration API
+- Login API
+- JWT authentication
+- User authorization
+- Password security
+- User profile APIs
+- Lost/found CRUD APIs
+- Request validation
+- Error handling
+- FastAPI-MySQL integration
+
+Main modules:
+Authentication + User Management + Core REST APIs
+
+Main responsibility:
+Core backend services and authentication.
+
+
+------------------------------------------------------------
+MEMBER 3 - SMART MATCHING & SEARCH
+------------------------------------------------------------
+
+Technology:
+Python + FastAPI
+
+Responsibilities:
+- Design matching algorithm
+- Compare lost and found reports
+- Text/keyword similarity
+- Category matching
+- Location matching
+- Date/time similarity
+- Generate match score
+- Rank potential matches
+- Search and filtering logic
+- Integrate matching engine with backend
+- Trigger the appropriate user-specific match event
+
+Main module:
+Smart Lost-Found Matching Engine
+
+Example:
+
+Lost Report
+     |
+     v
+Matching Engine
+     |
+     +-- Category
+     +-- Description
+     +-- Location
+     +-- Date/time
+     +-- Other attributes
+     |
+     v
+Match Score
+     |
+     v
+Potential Match
+     |
+     v
+Relevant User Notification
+
+Main responsibility:
+The intelligent component of the project.
+
+
+------------------------------------------------------------
+MEMBER 4 - DATABASE, CLAIMS & NOTIFICATIONS
+------------------------------------------------------------
+
+Technology:
+MySQL + FastAPI
+
+Responsibilities:
+- Design MySQL database
+- Create tables and relationships
+- User data management
+- Lost/found item records
+- Match records
+- Claim records
+- Notification records
+- Claim submission workflow
+- Claim verification workflow
+- Item status management
+- User-specific notifications
+- Admin-related database operations
+
+Main modules:
+Database + Claims + Verification + Notifications
+
+Main responsibility:
+Data management and secure recovery workflow.
+
+
+============================================================
+13. HOW THE FOUR MODULES CONNECT
+============================================================
+
+Member 1:
+React.js Frontend
+        |
+        v
+Member 2:
+FastAPI Backend & Authentication
+        |
+        +----------------------+
+        |                      |
+        v                      v
+Member 3:                 Member 4:
+Smart Matching            Database +
+& Search                  Claims +
+                          Notifications
+        |                      |
+        +----------+-----------+
+                   |
+                   v
+                 MySQL
+
+
+============================================================
+14. DATABASE CONCEPT
+============================================================
+
+A possible relational structure can include:
+
+USERS
+- user_id (PK)
+- name
+- student_staff_id
+- email
+- phone
+- password_hash
+- role
+- created_at
+
+ITEMS / REPORTS
+- item_id (PK)
+- user_id (FK)
+- report_type (LOST / FOUND)
+- item_name
+- category
+- description
+- colour
+- brand
+- location
+- date_time
+- image_path
+- status
+- created_at
+
+MATCHES
+- match_id (PK)
+- lost_item_id (FK)
+- found_item_id (FK)
+- match_score
+- match_status
+- created_at
+
+CLAIMS
+- claim_id (PK)
+- item_id (FK)
+- claimant_user_id (FK)
+- verification_details
+- claim_status
+- created_at
+
+NOTIFICATIONS
+- notification_id (PK)
+- user_id (FK)
+- item_id (FK)
+- type
+- message
+- is_read
+- created_at
+
+ADMINS / ROLES can be handled through the USERS table or a separate
+role structure.
+
+The exact schema can be refined during implementation.
+
+
+============================================================
+15. SECURITY AND PRIVACY
+============================================================
+
+Important design principles:
+- Passwords must be stored securely as hashes, never plain text.
+- JWT should be used for authenticated API access.
+- Users should only access/update records they are authorized to access.
+- Notifications must be tied to user_id.
+- Sensitive identifying details should not be publicly exposed.
+- Claim verification should protect against false ownership claims.
+- Admin operations should require appropriate authorization.
+
+
+============================================================
+16. ADVANTAGES
+============================================================
+
+For Students:
+- Easy reporting
+- Faster searching
+- Centralized information
+- Notifications about relevant matches
+- Better chance of recovering belongings
+
+For College Administration:
+- Organized lost-and-found records
+- Reduced manual work
+- Easier verification
+- Better tracking of recovered items
+
+Overall:
+- Reduces dependence on WhatsApp groups and physical notice boards
+- Prevents information from becoming scattered
+- Improves chances of recovering belongings
+- Provides a structured recovery process
+
+
+============================================================
+17. FUTURE ENHANCEMENTS
+============================================================
+
+Possible future improvements:
+- Mobile application
+- Advanced computer-vision matching
+- QR-based item identification
+- College ID integration
+- Geo-location support
+- Push notifications
+- Multi-campus support
+- AI-powered description matching
+- Fraud/suspicious-claim detection
+- Integration with college ERP systems
+
+
+============================================================
+18. ONE-LINE PROJECT DESCRIPTION
+============================================================
+
+A centralized smart platform that helps users report, search,
+automatically match, and securely recover lost and found belongings
+within an institution.
+
+
+============================================================
+19. SHORT PRESENTATION DESCRIPTION
+============================================================
+
+Our project is a Smart Lost and Found Management System designed for
+colleges. It provides a centralized platform where students and staff
+can report lost or found belongings. The system intelligently compares
+item details such as category, description, location, date, and
+optionally images to identify potential matches. Users are notified
+only when they are directly relevant to a match or event, while a claim
+and verification mechanism helps ensure that belongings are returned
+to their rightful owners.
+
+Technology stack:
+- Frontend: React.js
+- Backend: FastAPI + Python
+- Database: MySQL
+- API: REST API
+- Authentication: JWT
+- Matching: Python-based intelligent matching
+- Notifications: User-specific notification system
+
+
+============================================================
+20. CORE PROJECT PRINCIPLE
+============================================================
+
+The project is NOT just a basic lost-and-found CRUD application.
+
+Its core value is:
+
+CENTRALIZED REPORTING
+        +
+SMART MATCHING
+        +
+USER-SPECIFIC NOTIFICATIONS
+        +
+CLAIM & OWNERSHIP VERIFICATION
+        =
+SMART LOST AND FOUND MANAGEMENT SYSTEM
+
+All four team members should have substantial contributions:
+1. React.js frontend and user interaction
+2. FastAPI backend and authentication
+3. Smart matching and search
+4. MySQL database, claims, verification and notifications
