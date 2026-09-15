@@ -26,6 +26,30 @@ export const CLAIM_STATUS = {
   REJECTED: "REJECTED",
 };
 
+/* ---------- matches.status ----------
+ * Confirmed by the team: PENDING, ACCEPTED, REJECTED.
+ */
+export const MATCH_STATUS = {
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  REJECTED: "REJECTED",
+};
+
+/* ---------- lost_items.status & found_items.status ---------- */
+export const LOST_ITEM_STATUS = {
+  ACTIVE: "ACTIVE",
+  MATCHED: "MATCHED",
+  RECLAIMED: "RECLAIMED",
+  CLOSED: "CLOSED",
+};
+
+export const FOUND_ITEM_STATUS = {
+  AVAILABLE: "AVAILABLE",
+  CLAIMED: "CLAIMED",
+  RETURNED: "RETURNED",
+  CLOSED: "CLOSED",
+};
+
 /* ---------- Report type discriminator ----------
  * Not a database column. lost_items and found_items are separate tables;
  * this flag exists only so the frontend knows which one a record came from.

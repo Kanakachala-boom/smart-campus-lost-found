@@ -1,15 +1,17 @@
 /**
- * Login page — Stage 2 Authentication.
+ * Login page — The National Institute of Engineering (NIE), Mysuru.
  *
- * Provides campus user authentication with client-side validation, accessible
- * password visibility toggling, error alerts, and redirect handling.
+ * Provides institutional student and staff access with @nie.ac.in email domain
+ * validation, password visibility toggling, error alerts, and redirect handling.
+ *
+ * Registration is intentionally removed; all accounts are authorized institutional logins.
  */
 
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
-  CheckCircle2,
+  Building2,
   Eye,
   EyeOff,
   GraduationCap,
@@ -19,9 +21,8 @@ import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import ThemeToggle from "../../components/common/ThemeToggle";
 import useAuth from "../../hooks/useAuth";
+import { isValidNieEmail } from "../../utils/validators";
 import "./Login.css";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function Login() {
   const { login } = useAuth();
@@ -38,15 +39,12 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Success message passed from registration redirect
-  const registrationSuccessMessage = location.state?.message || "";
   const redirectTo = location.state?.from?.pathname || "/auth-test";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear field-specific error upon editing
     if (errors[name]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -63,9 +61,9 @@ export function Login() {
     const nextErrors = {};
 
     if (!formData.email.trim()) {
-      nextErrors.email = "Institutional email is required.";
-    } else if (!EMAIL_REGEX.test(formData.email.trim())) {
-      nextErrors.email = "Please enter a valid email address.";
+      nextErrors.email = "College email is required.";
+    } else if (!isValidNieEmail(formData.email.trim())) {
+      nextErrors.email = "Please use your official NIE email address.";
     }
 
     if (!formData.password) {
@@ -93,7 +91,7 @@ export function Login() {
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setServerError(
-        err?.message || "Invalid credentials. Please check your email and password.",
+        err?.message || "Invalid credentials. Please verify your NIE email and password.",
       );
     } finally {
       setIsSubmitting(false);
@@ -105,7 +103,7 @@ export function Login() {
       <div className="auth-topbar">
         <Link to="/" className="auth-topbar__brand">
           <GraduationCap size={20} className="auth-topbar__icon" aria-hidden="true" />
-          <span>Smart Campus Lost &amp; Found</span>
+          <span>The National Institute of Engineering, Mysuru</span>
         </Link>
         <ThemeToggle />
       </div>
@@ -114,27 +112,19 @@ export function Login() {
         <Card className="auth-card" padded={false}>
           <div className="auth-card__content">
             <header className="auth-card__header">
-              <div className="auth-card__badge">Stage 2 Authentication</div>
-              <h1 className="auth-card__title">Sign In</h1>
+              <div className="auth-card__emblem">
+                <Building2 size={28} className="auth-card__emblem-icon" aria-hidden="true" />
+              </div>
+              <div className="auth-card__institution">
+                The National Institute of Engineering
+              </div>
+              <h1 className="auth-card__title">
+                Smart Campus Lost &amp; Found System
+              </h1>
               <p className="auth-card__subtitle">
-                Enter your campus credentials to access lost and found services.
+                Secure access for NIE students
               </p>
             </header>
-
-            {registrationSuccessMessage && (
-              <div
-                className="auth-alert auth-alert--success"
-                role="status"
-                aria-live="polite"
-              >
-                <CheckCircle2
-                  size={18}
-                  className="auth-alert__icon"
-                  aria-hidden="true"
-                />
-                <div>{registrationSuccessMessage}</div>
-              </div>
-            )}
 
             {serverError && (
               <div
@@ -154,7 +144,7 @@ export function Login() {
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
               <div className="auth-field">
                 <label htmlFor="login-email" className="auth-label">
-                  Institutional Email
+                  College Email ID
                 </label>
                 <input
                   id="login-email"
@@ -164,17 +154,19 @@ export function Login() {
                   className={`auth-input ${
                     errors.email ? "auth-input--error" : ""
                   }`}
-                  placeholder="e.g. ananya.rao@example.edu"
+                  placeholder="e.g. 2024is_kanakachala_a@nie.ac.in"
                   value={formData.email}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.email)}
                   aria-describedby={errors.email ? "login-email-error" : undefined}
                   disabled={isSubmitting}
                 />
-                {errors.email && (
+                {errors.email ? (
                   <p id="login-email-error" className="auth-error">
                     {errors.email}
                   </p>
+                ) : (
+                  <p className="auth-hint">Must end with @nie.ac.in</p>
                 )}
               </div>
 
@@ -183,6 +175,13 @@ export function Login() {
                   <label htmlFor="login-password" className="auth-label">
                     Password
                   </label>
+                  <Link
+                    to="/forgot-password"
+                    className="auth-forgot-link"
+                    tabIndex={isSubmitting ? -1 : 0}
+                  >
+                    Forgot Password?
+                  </Link>
                 </div>
                 <div className="auth-password-wrapper">
                   <input
@@ -232,16 +231,13 @@ export function Login() {
                 icon={LogIn}
                 className="auth-submit-btn"
               >
-                Sign In
+                Log In
               </Button>
             </form>
 
             <div className="auth-card__footer">
-              <p>
-                Don't have an account?{" "}
-                <Link to="/register" className="auth-link">
-                  Register here
-                </Link>
+              <p className="auth-institutional-note">
+                Institutional login portal for verified students and staff of NIE, Mysuru.
               </p>
               <p className="auth-card__sublink">
                 <Link to="/" className="auth-link--muted">

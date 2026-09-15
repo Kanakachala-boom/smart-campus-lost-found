@@ -8,7 +8,7 @@
  */
 
 import { Link } from "react-router-dom";
-import { LogIn, PackageSearch, ShieldCheck, UserPlus } from "lucide-react";
+import { CheckCircle2, KeyRound, LogIn, Mail, PackageSearch, Search, ShieldCheck } from "lucide-react";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import StatusBadge from "../components/common/StatusBadge";
@@ -38,24 +38,70 @@ export function FoundationCheck() {
       </header>
 
       <div className="check__grid">
-        <Card title="Stage 2 — Authentication Flow" className="check__card check__card--full">
+        <Card title="Stage 2 — NIE Authentication Flow" className="check__card check__card--full">
           <p className="check__section-desc">
-            Test the Stage 2 authentication screens, client-side validation, mock session flow, and protected route gating.
+            Test the Stage 2 authentication screens for NIE students: institutional login, @nie.ac.in domain validation, password recovery, and protected route gating.
           </p>
           <div className="check__group">
             <Link to="/login">
               <Button variant="primary" icon={LogIn}>
-                Go to Sign In
+                Sign In
               </Button>
             </Link>
-            <Link to="/register">
-              <Button variant="secondary" icon={UserPlus}>
-                Go to Registration
+            <Link to="/forgot-password">
+              <Button variant="secondary" icon={Mail}>
+                Forgot Password
+              </Button>
+            </Link>
+            <Link to="/reset-password">
+              <Button variant="secondary" icon={KeyRound}>
+                Reset Password
               </Button>
             </Link>
             <Link to="/auth-test">
               <Button variant="ghost" icon={ShieldCheck}>
-                Test Protected Route (/auth-test)
+                Protected Route (/auth-test)
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        <Card title="Stage 3 — Report Item Flow (Protected)" className="check__card check__card--full">
+          <p className="check__section-desc">
+            Test the Stage 3 reporting screens: Report Lost Item, Report Found Item, campus location selection, image drag &amp; drop, custody tracking, and confidential verification marks.
+          </p>
+          <div className="check__group">
+            <Link to="/report/lost">
+              <Button variant="primary" icon={Search}>
+                Report Lost Item
+              </Button>
+            </Link>
+            <Link to="/report/found">
+              <Button variant="secondary" icon={CheckCircle2}>
+                Report Found Item
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        <Card title="Stage 4 — Browse &amp; Search Items (Protected)" className="check__card check__card--full">
+          <p className="check__section-desc">
+            Test the Stage 4 browsing &amp; search experience: unified All/Lost/Found tabs, debounced search, category/location/status filters, 9-item pagination, and item detail pages with Stage 5/6 bridges.
+          </p>
+          <div className="check__group">
+            <Link to="/items">
+              <Button variant="primary" icon={PackageSearch}>
+                Browse Registry (/items)
+              </Button>
+            </Link>
+            <Link to="/items?type=lost">
+              <Button variant="secondary" icon={Search}>
+                Lost Items Feed
+              </Button>
+            </Link>
+            <Link to="/items?type=found">
+              <Button variant="secondary" icon={CheckCircle2}>
+                Found Items Feed
               </Button>
             </Link>
           </div>

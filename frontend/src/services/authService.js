@@ -1,32 +1,22 @@
 /**
- * Authentication service.
+ * Authentication service for The National Institute of Engineering (NIE), Mysuru.
  *
- * Handles transport for registration, login, session restore, and logout.
- *
- * PROPOSED FASTAPI INTEGRATION CONTRACT:
- * - POST /api/auth/register -> payload: { name, email, password, phone }
- * - POST /api/auth/login    -> payload: { email, password } (or OAuth2 form with username/password)
- * - GET  /api/auth/me       -> returns current user profile derived from JWT
- *
- * Configurable login format:
- * Backend may expect application/json or application/x-www-form-urlencoded (OAuth2PasswordRequestForm).
- * This service defaults to JSON and adapts seamlessly via VITE_AUTH_LOGIN_FORMAT ("json" | "form").
+ * PROPOSED FASTAPI INTEGRATION CONTRACT (NOT YET IMPLEMENTED):
+ * - POST /api/auth/login           -> { email, password } or OAuth2 form
+ * - POST /api/auth/forgot-password -> { email }
+ * - POST /api/auth/reset-password  -> { token, new_password }
+ * - GET  /api/auth/me              -> Current user profile derived from JWT
  */
 
 import api, { ApiError, USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
-import {
-  addMockUser,
-  findMockUserByEmail,
-  findMockUserById,
-  mockUsers,
-} from "./mock/mockData";
+import { findMockUserByEmail, findMockUserById, mockUsers } from "./mock/mockData";
 import { mockError, mockResponse } from "./mock/mockClient";
 import { readStorage, STORAGE_KEYS } from "../utils/storage";
 
 /**
  * Proposed FastAPI login format adapter.
- * Configurable via environment variable without code rewrites.
+ * Configurable via environment variable (default: "json").
  */
 export const LOGIN_REQUEST_FORMAT =
   import.meta.env.VITE_AUTH_LOGIN_FORMAT?.toLowerCase() === "form"
@@ -34,43 +24,7 @@ export const LOGIN_REQUEST_FORMAT =
     : "json";
 
 /**
- * Registers a new user account.
- *
- * @param {Object} details
- * @param {string} details.name
- * @param {string} details.email
- * @param {string} details.password
- * @param {string|null} [details.phone]
- * @returns {Promise<{ message?: string, user: Object, access_token?: string }>}
- */
-export async function register({ name, email, password, phone }) {
-  if (USE_MOCK) {
-    const existing = findMockUserByEmail(email);
-    if (existing) {
-      return mockError("An account with this email already exists.", 409);
-    }
-
-    const newUser = addMockUser({ name, email, phone });
-    return mockResponse({
-      message: "Account registered successfully.",
-      user: newUser,
-    });
-  }
-
-  return api.post(
-    ENDPOINTS.REGISTER,
-    {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      password,
-      phone: phone ? phone.trim() : null,
-    },
-    { auth: false },
-  );
-}
-
-/**
- * Authenticates user credentials and returns session tokens.
+ * Authenticates NIE credentials.
  *
  * @param {Object} credentials
  * @param {string} credentials.email
@@ -78,10 +32,15 @@ export async function register({ name, email, password, phone }) {
  * @returns {Promise<{ access_token: string, token_type: string, user: Object }>}
  */
 export async function login({ email, password }) {
+  const normalizedEmail = email.trim().toLowerCase();
+
   if (USE_MOCK) {
-    const user = findMockUserByEmail(email);
+    const user = findMockUserByEmail(normalizedEmail);
     if (!user || !password) {
-      return mockError("Invalid email or password.", 401);
+      return mockError(
+        "Invalid credentials. Please verify your NIE email and password.",
+        401,
+      );
     }
 
     return mockResponse({
@@ -94,9 +53,8 @@ export async function login({ email, password }) {
   let responseData;
 
   if (LOGIN_REQUEST_FORMAT === "form") {
-    // FastAPI OAuth2PasswordRequestForm expects application/x-www-form-urlencoded
     const formData = new URLSearchParams();
-    formData.append("username", email.trim().toLowerCase());
+    formData.append("username", normalizedEmail);
     formData.append("password", password);
 
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -110,23 +68,20 @@ export async function login({ email, password }) {
 
     if (!response.ok) {
       const err = await response.json().catch(() => null);
-      throw new ApiError(err?.detail || "Invalid email or password.", {
+      throw new ApiError(err?.detail || "Invalid credentials.", {
         status: response.status,
       });
     }
 
     responseData = await response.json();
   } else {
-    // Standard JSON payload
     responseData = await api.post(
       ENDPOINTS.LOGIN,
-      { email: email.trim().toLowerCase(), password },
+      { email: normalizedEmail, password },
       { auth: false },
     );
   }
 
-  // If the backend login endpoint returned a token without the user object,
-  // fetch the user profile via the proposed /api/auth/me endpoint.
   if (responseData?.access_token && !responseData?.user) {
     try {
       const userProfile = await api.get(ENDPOINTS.ME, {
@@ -139,6 +94,55 @@ export async function login({ email, password }) {
   }
 
   return responseData;
+}
+
+/**
+ * Submits a password recovery request for an NIE email.
+ *
+ * Note: Does not confirm whether the email actually exists, to prevent
+ * account enumeration.
+ *
+ * @param {string} email
+ * @returns {Promise<{ message: string }>}
+ */
+export async function requestPasswordReset(email) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (USE_MOCK) {
+    // Simulate server processing delay
+    return mockResponse({
+      message:
+        "If an account exists for this NIE email, recovery instructions have been sent to your registered college email.",
+    });
+  }
+
+  return api.post(
+    ENDPOINTS.FORGOT_PASSWORD,
+    { email: normalizedEmail },
+    { auth: false },
+  );
+}
+
+/**
+ * Resets the password using a reset token provided in the recovery link.
+ *
+ * @param {Object} params
+ * @param {string} params.token
+ * @param {string} params.newPassword
+ * @returns {Promise<{ message: string }>}
+ */
+export async function resetPassword({ token, newPassword }) {
+  if (USE_MOCK) {
+    return mockResponse({
+      message: "Password has been updated successfully.",
+    });
+  }
+
+  return api.post(
+    ENDPOINTS.RESET_PASSWORD,
+    { token: token || null, new_password: newPassword },
+    { auth: false },
+  );
 }
 
 /**
@@ -174,8 +178,9 @@ export async function logout() {
 }
 
 export default {
-  register,
   login,
+  requestPasswordReset,
+  resetPassword,
   getCurrentUser,
   logout,
   LOGIN_REQUEST_FORMAT,

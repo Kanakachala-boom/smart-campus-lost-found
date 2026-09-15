@@ -1,22 +1,37 @@
 /**
- * Placeholder fixture data. NOT REAL DATA.
+ * Placeholder fixture data for The National Institute of Engineering (NIE), Mysuru.
  *
- * Field names mirror the authoritative database schema (users, role,
- * created_at, etc.) so that switching a service from mock data to a real
- * endpoint later requires no changes to any component.
- *
+ * All mock accounts strictly use official @nie.ac.in institutional emails.
  * Passwords are never stored here.
  */
 
 export const mockUsers = [
   {
     user_id: 1,
-    name: "Ananya Rao",
-    email: "ananya.rao@example.edu",
+    name: "Kanakachala A",
+    email: "2024is_kanakachala_a@nie.ac.in",
     phone: "9876543210",
     role: "STUDENT",
     is_active: true,
+    created_at: "2026-08-01 09:00:00",
+  },
+  {
+    user_id: 2,
+    name: "Ananya Rao",
+    email: "2024is_ananya_r@nie.ac.in",
+    phone: "9876543211",
+    role: "STUDENT",
+    is_active: true,
     created_at: "2026-08-02 09:14:00",
+  },
+  {
+    user_id: 3,
+    name: "Prof. S. N. Murthy (Admin)",
+    email: "admin@nie.ac.in",
+    phone: "9876543212",
+    role: "ADMIN",
+    is_active: true,
+    created_at: "2026-08-01 08:30:00",
   },
 ];
 
@@ -37,28 +52,8 @@ export function findMockUserById(id) {
   return mockUsers.find((u) => u.user_id === numericId) ?? null;
 }
 
-/**
- * Adds a new mock user registered during the mock session.
- */
-export function addMockUser({ name, email, phone, role = "STUDENT" }) {
-  const normalizedEmail = email.trim().toLowerCase();
-  const nextId = mockUsers.length > 0 ? Math.max(...mockUsers.map((u) => u.user_id)) + 1 : 1;
-  const newUser = {
-    user_id: nextId,
-    name: name.trim(),
-    email: normalizedEmail,
-    phone: phone ? phone.trim() : null,
-    role,
-    is_active: true,
-    created_at: new Date().toISOString(),
-  };
-  mockUsers.push(newUser);
-  return newUser;
-}
-
 export default {
   mockUsers,
   findMockUserByEmail,
   findMockUserById,
-  addMockUser,
 };

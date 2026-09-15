@@ -1,13 +1,10 @@
 /**
- * Authentication state.
+ * Authentication state for The National Institute of Engineering (NIE), Mysuru.
  *
  * Provides session management, token persistence, role helpers, and
- * login/register/logout methods for all application components.
+ * login/logout/recovery methods for all application components.
  *
- * SECURITY NOTE:
- * The JWT is kept in localStorage so the session survives a browser refresh.
- * Role checks here control interface presentation only; the backend
- * independently re-authenticates every request via the Authorization header.
+ * Registration is intentionally omitted as accounts are pre-authorized institutional NIE logins.
  */
 
 import {
@@ -32,7 +29,6 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => readStorage(STORAGE_KEYS.USER));
   const [token, setToken] = useState(() => readStorage(STORAGE_KEYS.TOKEN));
-  // Starts true so route guards wait for the session check on page load
   const [isInitialising, setIsInitialising] = useState(true);
 
   const clearSession = useCallback(() => {
@@ -83,9 +79,7 @@ export function AuthProvider({ children }) {
     return () => {
       cancelled = true;
     };
-    // Runs once on mount; token changes are handled by login/logout directly.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [token, clearSession]);
 
   const login = useCallback(
     async (credentials) => {
@@ -98,13 +92,13 @@ export function AuthProvider({ children }) {
     [persistSession],
   );
 
-  const register = useCallback(
-    async (details) => {
-      const result = await authService.register(details);
-      return result;
-    },
-    [],
-  );
+  const requestPasswordReset = useCallback(async (email) => {
+    return authService.requestPasswordReset(email);
+  }, []);
+
+  const resetPassword = useCallback(async (params) => {
+    return authService.resetPassword(params);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -122,10 +116,11 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(token && user),
       isAdmin: user?.role === ROLES.ADMIN,
       login,
-      register,
+      requestPasswordReset,
+      resetPassword,
       logout,
     }),
-    [user, token, isInitialising, login, register, logout],
+    [user, token, isInitialising, login, requestPasswordReset, resetPassword, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

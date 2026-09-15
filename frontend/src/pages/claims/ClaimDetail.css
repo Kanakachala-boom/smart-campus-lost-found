@@ -1,0 +1,88 @@
+.claim-detail-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+}
+
+.claim-detail-topbar {
+  margin-bottom: var(--space-6);
+}
+
+.claim-detail-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.claim-detail-back-link:hover {
+  text-decoration: underline;
+}
+
+.claim-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.claim-evidence-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.claim-evidence-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.claim-evidence-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .claim-evidence-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.claim-evidence-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.claim-evidence-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.claim-evidence-val {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.claim-evidence-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.6;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface-hover);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}

@@ -36,7 +36,7 @@ export function AuthTest() {
       <header className="auth-test-header">
         <div className="auth-test-header__brand">
           <GraduationCap size={22} className="auth-test-header__icon" aria-hidden="true" />
-          <span>Smart Campus Lost &amp; Found</span>
+          <span>The National Institute of Engineering, Mysuru</span>
         </div>
         <div className="auth-test-header__actions">
           <ThemeToggle />
@@ -56,8 +56,9 @@ export function AuthTest() {
           <span className="auth-test-badge">Stage 2 Verification</span>
           <h1 className="auth-test-title">Protected Route Test</h1>
           <p className="auth-test-subtitle">
-            This route is protected by <code>ProtectedRoute</code>. Access is only
-            permitted with an active authentication session.
+            This route is protected by <code>ProtectedRoute</code>. Access is
+            permitted only for verified NIE college accounts with an active
+            session.
           </p>
         </div>
 
