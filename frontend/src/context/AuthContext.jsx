@@ -1,15 +1,13 @@
 /**
  * Authentication state.
  *
- * Foundation only: session shape, persistence and role helpers. The login
- * and registration screens are not part of this stage.
+ * Provides session management, token persistence, role helpers, and
+ * login/register/logout methods for all application components.
  *
- * SECURITY NOTE
- * The JWT is kept in localStorage so the session survives a refresh. This is
- * readable by any script on the origin, so it is only acceptable because the
- * backend independently authorises every request. Role checks here control
- * what the interface offers, never what the API permits. The backend must
- * re-check the role on every protected route.
+ * SECURITY NOTE:
+ * The JWT is kept in localStorage so the session survives a browser refresh.
+ * Role checks here control interface presentation only; the backend
+ * independently re-authenticates every request via the Authorization header.
  */
 
 import {
@@ -23,8 +21,8 @@ import { setUnauthorizedHandler } from "../services/api";
 import authService from "../services/authService";
 import { ROLES } from "../utils/constants";
 import {
-  clearAppStorage,
   readStorage,
+  removeStorage,
   STORAGE_KEYS,
   writeStorage,
 } from "../utils/storage";
@@ -34,14 +32,14 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => readStorage(STORAGE_KEYS.USER));
   const [token, setToken] = useState(() => readStorage(STORAGE_KEYS.TOKEN));
-  // Starts true so route guards (added later) wait for the session check
-  // instead of bouncing an authenticated user to login on reload.
+  // Starts true so route guards wait for the session check on page load
   const [isInitialising, setIsInitialising] = useState(true);
 
   const clearSession = useCallback(() => {
     setUser(null);
     setToken(null);
-    clearAppStorage();
+    removeStorage(STORAGE_KEYS.TOKEN);
+    removeStorage(STORAGE_KEYS.USER);
   }, []);
 
   const persistSession = useCallback((accessToken, userRecord) => {
@@ -70,8 +68,10 @@ export function AuthProvider({ children }) {
       try {
         const current = await authService.getCurrentUser();
         if (cancelled) return;
-        setUser(current);
-        writeStorage(STORAGE_KEYS.USER, current);
+        if (current) {
+          setUser(current);
+          writeStorage(STORAGE_KEYS.USER, current);
+        }
       } catch {
         if (!cancelled) clearSession();
       } finally {
@@ -90,8 +90,10 @@ export function AuthProvider({ children }) {
   const login = useCallback(
     async (credentials) => {
       const result = await authService.login(credentials);
-      persistSession(result.access_token, result.user);
-      return result.user;
+      if (result?.access_token && result?.user) {
+        persistSession(result.access_token, result.user);
+      }
+      return result;
     },
     [persistSession],
   );
@@ -99,10 +101,9 @@ export function AuthProvider({ children }) {
   const register = useCallback(
     async (details) => {
       const result = await authService.register(details);
-      persistSession(result.access_token, result.user);
-      return result.user;
+      return result;
     },
-    [persistSession],
+    [],
   );
 
   const logout = useCallback(async () => {

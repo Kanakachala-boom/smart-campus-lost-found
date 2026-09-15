@@ -7,7 +7,8 @@
  * built in a later stage.
  */
 
-import { PackageSearch } from "lucide-react";
+import { Link } from "react-router-dom";
+import { LogIn, PackageSearch, ShieldCheck, UserPlus } from "lucide-react";
 import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import StatusBadge from "../components/common/StatusBadge";
@@ -37,6 +38,29 @@ export function FoundationCheck() {
       </header>
 
       <div className="check__grid">
+        <Card title="Stage 2 — Authentication Flow" className="check__card check__card--full">
+          <p className="check__section-desc">
+            Test the Stage 2 authentication screens, client-side validation, mock session flow, and protected route gating.
+          </p>
+          <div className="check__group">
+            <Link to="/login">
+              <Button variant="primary" icon={LogIn}>
+                Go to Sign In
+              </Button>
+            </Link>
+            <Link to="/register">
+              <Button variant="secondary" icon={UserPlus}>
+                Go to Registration
+              </Button>
+            </Link>
+            <Link to="/auth-test">
+              <Button variant="ghost" icon={ShieldCheck}>
+                Test Protected Route (/auth-test)
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
         <Card title="Buttons" className="check__card">
           <p className="check__section-desc">
             Standard interactive controls using university blue and accessible contrast states.
