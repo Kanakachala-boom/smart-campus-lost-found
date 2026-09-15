@@ -1,0 +1,297 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  padding: var(--space-4);
+  box-sizing: border-box;
+}
+
+.auth-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--content-max-width);
+  width: 100%;
+  margin: 0 auto var(--space-6);
+  padding: var(--space-2) 0;
+}
+
+.auth-topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.auth-topbar__brand:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.auth-topbar__icon {
+  color: var(--color-primary);
+}
+
+.auth-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-bottom: var(--space-12);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.auth-card__content {
+  padding: var(--space-8) var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .auth-card__content {
+    padding: var(--space-10) var(--space-8);
+  }
+}
+
+.auth-card__header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.auth-card__emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-soft-border);
+  margin-bottom: var(--space-3);
+}
+
+.auth-card__emblem-icon {
+  color: var(--color-primary);
+}
+
+.auth-card__institution {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+}
+
+.auth-card__title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+
+@media (min-width: 640px) {
+  .auth-card__title {
+    font-size: var(--text-2xl);
+  }
+}
+
+.auth-card__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+/* Alert banners */
+.auth-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  margin-bottom: var(--space-6);
+}
+
+.auth-alert--success {
+  background-color: var(--color-success-soft);
+  color: var(--color-success-soft-text);
+  border: 1px solid var(--color-success-soft-border);
+}
+
+.auth-alert--error {
+  background-color: var(--color-danger-soft);
+  color: var(--color-danger-soft-text);
+  border: 1px solid var(--color-danger-soft-border);
+}
+
+.auth-alert__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Form layout */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auth-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  letter-spacing: 0.01em;
+}
+
+.auth-forgot-link {
+  font-size: var(--text-xs);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+}
+
+.auth-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.auth-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.auth-input::placeholder {
+  color: var(--color-text-subtle);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.auth-input--error {
+  border-color: var(--color-danger) !important;
+}
+
+.auth-input--error:focus {
+  box-shadow: 0 0 0 3px var(--color-danger-soft) !important;
+}
+
+.auth-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.auth-password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.auth-input--with-toggle {
+  padding-right: 44px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.auth-password-toggle:hover {
+  color: var(--color-text);
+  background-color: var(--color-surface-hover);
+}
+
+.auth-password-toggle:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}
+
+.auth-error {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin-top: 2px;
+}
+
+.auth-submit-btn {
+  margin-top: var(--space-2);
+}
+
+.auth-card__footer {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.auth-institutional-note {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+
+.auth-card__sublink {
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.auth-link--muted {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.auth-link--muted:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}

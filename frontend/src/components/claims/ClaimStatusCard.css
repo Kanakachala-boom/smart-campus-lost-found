@@ -1,0 +1,84 @@
+.claim-status-card {
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.claim-status-card--pending {
+  border-left: 4px solid var(--color-warning);
+  background-color: var(--color-warning-soft);
+}
+
+.claim-status-card--verified {
+  border-left: 4px solid var(--color-success);
+  background-color: var(--color-success-soft);
+}
+
+.claim-status-card--rejected {
+  border-left: 4px solid var(--color-danger);
+  background-color: var(--color-danger-soft);
+}
+
+.claim-status-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.claim-status-card__badge-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.claim-status-card__ref {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.claim-status-card__title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-top: 2px;
+}
+
+.claim-status-card__body {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.claim-status-card__notice {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.claim-status-card__notice-label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.claim-status-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}

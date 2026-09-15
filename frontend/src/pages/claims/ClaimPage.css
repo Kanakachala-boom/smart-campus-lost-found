@@ -1,0 +1,95 @@
+.claim-page {
+  padding: var(--space-6) var(--space-4) var(--space-12);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.claim-page__topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.claim-page__back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.claim-page__back-link:hover {
+  text-decoration: underline;
+}
+
+/* Success Confirmation Screen */
+.claim-success-card {
+  max-width: 640px;
+  margin: var(--space-4) auto;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.claim-success-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-success-soft);
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-success-soft-border);
+}
+
+.claim-success-title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.claim-success-ref {
+  display: inline-block;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+.claim-success-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  max-width: 480px;
+}
+
+.claim-success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 320px;
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 480px) {
+  .claim-success-actions {
+    flex-direction: row;
+    max-width: 400px;
+    justify-content: center;
+  }
+}
