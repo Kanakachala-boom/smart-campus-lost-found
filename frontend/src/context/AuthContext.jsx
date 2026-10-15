@@ -1,10 +1,9 @@
+
 /**
  * Authentication state for The National Institute of Engineering (NIE), Mysuru.
  *
  * Provides session management, token persistence, role helpers, and
  * login/logout/recovery methods for all application components.
- *
- * Registration is intentionally omitted as accounts are pre-authorized institutional NIE logins.
  */
 
 import {
@@ -14,6 +13,7 @@ import {
   useMemo,
   useState,
 } from "react";
+
 import { setUnauthorizedHandler } from "../services/api";
 import authService from "../services/authService";
 import { ROLES } from "../utils/constants";
@@ -27,31 +27,44 @@ import {
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => readStorage(STORAGE_KEYS.USER));
-  const [token, setToken] = useState(() => readStorage(STORAGE_KEYS.TOKEN));
+  const [user, setUser] = useState(() =>
+    readStorage(STORAGE_KEYS.USER)
+  );
+
+  const [token, setToken] = useState(() =>
+    readStorage(STORAGE_KEYS.TOKEN)
+  );
+
   const [isInitialising, setIsInitialising] = useState(true);
 
+  // Clear authentication state and persisted session.
   const clearSession = useCallback(() => {
     setUser(null);
     setToken(null);
+
     removeStorage(STORAGE_KEYS.TOKEN);
     removeStorage(STORAGE_KEYS.USER);
   }, []);
 
+  // Save authenticated user and token.
   const persistSession = useCallback((accessToken, userRecord) => {
-    setToken(accessToken);
-    setUser(userRecord);
     writeStorage(STORAGE_KEYS.TOKEN, accessToken);
     writeStorage(STORAGE_KEYS.USER, userRecord);
+
+    setToken(accessToken);
+    setUser(userRecord);
   }, []);
 
-  /* A 401 from any request means the token is gone or expired. */
+  // Clear the session if the API reports an unauthorized request.
   useEffect(() => {
     setUnauthorizedHandler(() => clearSession());
-    return () => setUnauthorizedHandler(null);
+
+    return () => {
+      setUnauthorizedHandler(null);
+    };
   }, [clearSession]);
 
-  /* Revalidate a stored token once on load. */
+  // Restore and validate a saved session on application startup.
   useEffect(() => {
     let cancelled = false;
 
@@ -62,36 +75,68 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        const current = await authService.getCurrentUser();
+        const currentUser = await authService.getCurrentUser();
+
         if (cancelled) return;
-        if (current) {
-          setUser(current);
-          writeStorage(STORAGE_KEYS.USER, current);
+
+        if (!currentUser) {
+          clearSession();
+          return;
         }
-      } catch {
-        if (!cancelled) clearSession();
+
+        setUser(currentUser);
+        writeStorage(STORAGE_KEYS.USER, currentUser);
+      } catch (error) {
+        if (!cancelled) {
+          clearSession();
+        }
       } finally {
-        if (!cancelled) setIsInitialising(false);
+        if (!cancelled) {
+          setIsInitialising(false);
+        }
       }
     }
 
     restoreSession();
+
     return () => {
       cancelled = true;
     };
   }, [token, clearSession]);
 
+  // Login.
   const login = useCallback(
     async (credentials) => {
       const result = await authService.login(credentials);
-      if (result?.access_token && result?.user) {
-        persistSession(result.access_token, result.user);
+
+      if (!result?.access_token || !result?.user) {
+        throw new Error(
+          "Login response is missing the access token or user profile."
+        );
       }
+
+      persistSession(result.access_token, result.user);
+
       return result;
     },
-    [persistSession],
+    [persistSession]
   );
 
+  // Logout: clear the local session even if the API request fails.
+  const logout = useCallback(async () => {
+    const logoutRequest = authService.logout();
+
+    clearSession();
+
+    try {
+      await logoutRequest;
+    } catch (error) {
+      // Local logout is complete even if the server request fails.
+      console.error("Logout API request failed:", error);
+    }
+  }, [clearSession]);
+
+  // Password recovery.
   const requestPasswordReset = useCallback(async (email) => {
     return authService.requestPasswordReset(email);
   }, []);
@@ -100,13 +145,7 @@ export function AuthProvider({ children }) {
     return authService.resetPassword(params);
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await authService.logout();
-    } finally {
-      clearSession();
-    }
-  }, [clearSession]);
+  const isAdmin = user?.role === ROLES.ADMIN;
 
   const value = useMemo(
     () => ({
@@ -114,16 +153,29 @@ export function AuthProvider({ children }) {
       token,
       isInitialising,
       isAuthenticated: Boolean(token && user),
-      isAdmin: user?.role === ROLES.ADMIN,
+      isAdmin,
       login,
+      logout,
       requestPasswordReset,
       resetPassword,
-      logout,
     }),
-    [user, token, isInitialising, login, requestPasswordReset, resetPassword, logout],
+    [
+      user,
+      token,
+      isInitialising,
+      isAdmin,
+      login,
+      logout,
+      requestPasswordReset,
+      resetPassword,
+    ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export default AuthContext;

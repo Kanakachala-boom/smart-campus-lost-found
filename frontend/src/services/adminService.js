@@ -1,16 +1,11 @@
-/**
- * Service for Campus Administration & Oversight.
- *
- * PROPOSED FASTAPI INTEGRATION:
- * - GET  /api/admin/dashboard
- * - GET  /api/admin/claims
- * - GET  /api/admin/items
- * - GET  /api/admin/matches
- */
 
 import api, { USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
-import { mockLostItems, mockFoundItems, updateMockItemStatus } from "./mock/mockItems";
+import {
+  mockLostItems,
+  mockFoundItems,
+  updateMockItemStatus,
+} from "./mock/mockItems";
 import {
   listAllMockClaims,
   adminVerifyMockClaim,
@@ -25,120 +20,149 @@ export async function getAdminOverview() {
 
     const totalLost = mockLostItems.length;
     const totalFound = mockFoundItems.length;
-    const activeLost = mockLostItems.filter((i) => i.status === "ACTIVE").length;
-    const activeFound = mockFoundItems.filter((i) => i.status === "AVAILABLE").length;
+    const activeLost = mockLostItems.filter(
+      (item) => item.status === "ACTIVE"
+    ).length;
+    const activeFound = mockFoundItems.filter(
+      (item) => item.status === "AVAILABLE"
+    ).length;
     const returnedItems =
-      mockLostItems.filter((i) => i.status === "RETURNED" || i.status === "RECLAIMED").length +
-      mockFoundItems.filter((i) => i.status === "RETURNED").length;
-    const claimedItems = mockFoundItems.filter((i) => i.status === "CLAIMED").length;
+      mockLostItems.filter(
+        (item) => ["RETURNED", "RECLAIMED"].includes(item.status)
+      ).length +
+      mockFoundItems.filter((item) => item.status === "RETURNED").length;
 
-    const pendingClaims = claims.filter((c) => c.status === "PENDING").length;
-    const verifiedClaims = claims.filter((c) => c.status === "VERIFIED").length;
-    const rejectedClaims = claims.filter((c) => c.status === "REJECTED").length;
+    const claimedItems = mockFoundItems.filter(
+      (item) => item.status === "CLAIMED"
+    ).length;
 
-    const recoveryRate =
-      totalLost + totalFound > 0
-        ? Math.round((returnedItems / (totalLost + totalFound)) * 100)
-        : 0;
+    const pendingClaims = claims.filter(
+      (claim) => claim.status === "PENDING"
+    ).length;
+    const verifiedClaims = claims.filter(
+      (claim) => ["VERIFIED", "APPROVED"].includes(claim.status)
+    ).length;
+    const rejectedClaims = claims.filter(
+      (claim) => claim.status === "REJECTED"
+    ).length;
+
+    const totalReports = totalLost + totalFound;
 
     return {
       metrics: {
         totalLost,
         totalFound,
-        totalReports: totalLost + totalFound,
+        totalReports,
         activeReports: activeLost + activeFound,
         claimedItems,
         returnedItems,
         pendingClaims,
         verifiedClaims,
         rejectedClaims,
-        recoveryRate,
+        recoveryRate: totalReports
+          ? Math.round((returnedItems / totalReports) * 100)
+          : 0,
       },
     };
   }
 
-  return api.get(ENDPOINTS.ADMIN_DASHBOARD);
+  const data = await api.get(ENDPOINTS.ADMIN_DASHBOARD);
+
+  return {
+    metrics: {
+      totalLost: data.total_lost_items,
+      totalFound: data.total_found_items,
+      totalReports: data.total_lost_items + data.total_found_items,
+      activeReports: null,
+      claimedItems: null,
+      returnedItems: data.total_reclaims,
+      pendingClaims: data.pending_claims,
+      verifiedClaims: null,
+      rejectedClaims: null,
+      recoveryRate: null,
+      totalUsers: data.total_users,
+      totalClaims: data.total_claims,
+    },
+  };
 }
 
 export async function getAdminClaims() {
   if (USE_MOCK) {
-    const res = await listAllMockClaims();
-    return res.data;
+    const response = await listAllMockClaims();
+    return response.data;
   }
+
   return api.get(ENDPOINTS.ADMIN_CLAIMS);
 }
 
 export async function getAdminItems() {
   if (USE_MOCK) {
     const lost = mockLostItems.map((item) => ({
+      ...item,
       id: item.lost_item_id,
       type: "lost",
-      item_name: item.item_name,
-      category: item.category,
-      location: item.location_lost,
-      date: item.date_lost,
-      status: item.status,
-      created_at: item.created_at,
-      user_id: item.user_id,
-      // Private identifying marks are accessible in authorized admin review
-      identifying_marks: item.identifying_marks,
     }));
 
     const found = mockFoundItems.map((item) => ({
+      ...item,
       id: item.found_item_id,
       type: "found",
-      item_name: item.item_name,
-      category: item.category,
-      location: item.location_found,
-      custody_location: item.custody_location,
-      date: item.date_found,
-      status: item.status,
-      created_at: item.created_at,
-      user_id: item.user_id,
     }));
 
     return [...lost, ...found];
   }
 
-  return api.get(ENDPOINTS.ADMIN_ITEMS);
+  const [lost, found] = await Promise.all([
+    api.get(ENDPOINTS.LOST_ITEMS),
+    api.get(ENDPOINTS.FOUND_ITEMS),
+  ]);
+
+  return [
+    ...lost.map((item) => ({ ...item, id: item.lost_id, type: "lost" })),
+    ...found.map((item) => ({ ...item, id: item.found_id, type: "found" })),
+  ];
 }
 
 export async function getAdminMatches() {
   if (USE_MOCK) {
-    const res = await listAllMockMatches();
-    return res.data;
+    const response = await listAllMockMatches();
+    return response.data;
   }
-  return api.get(ENDPOINTS.ADMIN_MATCHES);
+
+  throw new Error("The matches API has not been implemented in FastAPI yet.");
 }
 
 export async function adminVerifyClaim(claimId, instructions) {
   if (USE_MOCK) {
-    const res = await adminVerifyMockClaim(claimId, instructions);
-    return res.data;
+    const response = await adminVerifyMockClaim(claimId, instructions);
+    return response.data;
   }
-  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
-    status: "VERIFIED",
-    handover_instructions: instructions,
+
+  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
+    status: "APPROVED",
   });
 }
 
 export async function adminRejectClaim(claimId, reason) {
   if (USE_MOCK) {
-    const res = await adminRejectMockClaim(claimId, reason);
-    return res.data;
+    const response = await adminRejectMockClaim(claimId, reason);
+    return response.data;
   }
-  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
+
+  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
     status: "REJECTED",
-    rejection_reason: reason,
   });
 }
 
 export async function adminUpdateItemStatus(type, id, status) {
   if (USE_MOCK) {
-    const res = await updateMockItemStatus(type, id, status);
-    return res.data;
+    const response = await updateMockItemStatus(type, id, status);
+    return response.data;
   }
-  return api.patch(ENDPOINTS.ITEM_DETAIL(type, id), { status });
+
+  throw new Error(
+    "The admin item-status update endpoint has not been implemented in FastAPI."
+  );
 }
 
 export default {

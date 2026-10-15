@@ -1,54 +1,57 @@
+
 /**
- * Single source of truth for backend endpoint paths.
- *
- * PROPOSED — BACKEND NOT IMPLEMENTED. None of these routes exist yet.
- * When the backend team finalises real routes, this is the only file
- * that needs to change.
+ * Central endpoint paths matching the current FastAPI backend.
+ * Base URL is configured separately in frontend/.env.
  */
 
 export const ENDPOINTS = {
-  /* ---- Proposed Authentication ---- */
-  LOGIN: "/api/auth/login",
-  FORGOT_PASSWORD: "/api/auth/forgot-password",
-  RESET_PASSWORD: "/api/auth/reset-password",
-  ME: "/api/auth/me",
+  // Authentication
+  LOGIN: "/auth/login",
+  REGISTER: "/auth/register",
+  ME: "/auth/me",
+  FORGOT_PASSWORD: "/auth/forgot-password",
+  RESET_PASSWORD: "/auth/reset-password",
 
-  /* ---- Proposed Item Reporting & Browsing ---- */
-  ITEMS: "/api/items",
-  LOST_ITEMS: "/api/lost-items",
-  FOUND_ITEMS: "/api/found-items",
-  ITEM_DETAIL: (type, id) => `/api/${type}-items/${id}`,
-  MY_REPORTS: "/api/users/me/reports",
+  // Lost and found items
+  ITEMS: "/lost-items",
+  LOST_ITEMS: "/lost-items",
+  FOUND_ITEMS: "/found-items",
+  ITEM_DETAIL: (type, id) => `/${type}-items/${id}`,
+  MY_REPORTS: "/users/me/reports",
 
-  /* ---- Proposed Claims & Ownership Verification (Stage 5) ---- */
-  CLAIMS: "/api/claims",
-  MY_CLAIMS: "/api/claims/my-claims",
-  CLAIM_DETAIL: (id) => `/api/claims/${id}`,
-  VERIFICATION_CHALLENGE: (foundItemId) => `/api/found-items/${foundItemId}/verification-challenge`,
-  VERIFY_CLAIM: (claimId) => `/api/claims/${claimId}/verify`,
+  // Claims
+  CLAIMS: "/claims",
+  MY_CLAIMS: "/claims/mine",
+  CLAIM_DETAIL: (id) => `/claims/${id}`,
+  VERIFICATION_CHALLENGE: (claimId) =>
+    `/ownership-verifications/claim/${claimId}`,
+  VERIFY_CLAIM: (verificationId) =>
+    `/ownership-verifications/${verificationId}/answer`,
+  CLAIM_REVIEW: (id) => `/claims/${id}/review`,
+  // Matching — requires a matching router
+  MY_MATCHES: "/matches/my-matches",
+  LOST_MATCHES: (id) => `/lost-items/${id}/matches`,
+  FOUND_MATCHES: (id) => `/found-items/${id}/matches`,
+  UPDATE_MATCH_STATUS: (id) => `/matches/${id}/status`,
 
-  /* ---- Proposed Automated Matching (Stage 6) ---- */
-  MY_MATCHES: "/api/matches/my-matches",
-  LOST_MATCHES: (id) => `/api/lost-items/${id}/matches`,
-  FOUND_MATCHES: (id) => `/api/found-items/${id}/matches`,
-  UPDATE_MATCH_STATUS: (id) => `/api/matches/${id}/status`,
+  // Notifications
+  NOTIFICATIONS: "/notifications",
+  NOTIFICATION_READ: (id) => `/notifications/${id}/read`,
+  NOTIFICATIONS_READ_ALL: "/notifications/read-all",
+  NOTIFICATION_UNREAD_COUNT: "/notifications/unread-count",
 
-  /* ---- Proposed Targeted Notifications ---- */
-  NOTIFICATIONS: "/api/notifications",
-  NOTIFICATION_READ: (id) => `/api/notifications/${id}/read`,
-  NOTIFICATIONS_READ_ALL: "/api/notifications/read-all",
+  // Private messages
+  CLAIM_MESSAGES: (claimId) => `/claims/${claimId}/messages`,
+  MESSAGES: "/messages",
+  CONVERSATIONS: "/messages/conversations",
+  CONVERSATION: (userId) => `/messages/conversation/${userId}`,
 
-  /* ---- Proposed In-App Claim-Based Messages ---- */
-  CLAIM_MESSAGES: (claimId) => `/api/claims/${claimId}/messages`,
-
-  /* ---- Proposed Dashboard Metrics ---- */
-  DASHBOARD: "/api/dashboard",
-
-  /* ---- Proposed Administrative Oversight ---- */
-  ADMIN_DASHBOARD: "/api/admin/dashboard",
-  ADMIN_CLAIMS: "/api/admin/claims",
-  ADMIN_ITEMS: "/api/admin/items",
-  ADMIN_MATCHES: "/api/admin/matches",
+  // Dashboard
+  DASHBOARD: "/dashboard",
+  ADMIN_DASHBOARD: "/admin/dashboard",
+  ADMIN_CLAIMS: "/admin/claims",
+  ADMIN_ITEMS: "/admin/items",
+  ADMIN_MATCHES: "/admin/matches",
 };
 
 export default ENDPOINTS;

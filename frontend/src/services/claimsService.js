@@ -1,13 +1,3 @@
-/**
- * Service for Item Claims and Ownership Verification.
- *
- * PROPOSED FASTAPI INTEGRATION:
- * - POST /api/claims
- * - GET  /api/claims/my-claims
- * - GET  /api/claims/{claim_id}
- * - GET  /api/found-items/{id}/verification-challenge
- * - POST /api/claims/{claim_id}/verify (Admin)
- */
 
 import api, { USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
@@ -30,7 +20,10 @@ export async function submitClaim(claimData, user) {
     });
   }
 
-  return api.post(ENDPOINTS.CLAIMS, claimData);
+  // Backend expects { match_id: number }.
+  return api.post(ENDPOINTS.CLAIMS, {
+    match_id: Number(claimData.match_id),
+  });
 }
 
 export async function getMyClaims(userId) {
@@ -38,6 +31,7 @@ export async function getMyClaims(userId) {
     return listMockUserClaims(userId || 1);
   }
 
+  // The backend derives the user ID from the JWT.
   return api.get(ENDPOINTS.MY_CLAIMS);
 }
 
@@ -49,12 +43,25 @@ export async function getClaimById(claimId) {
   return api.get(ENDPOINTS.CLAIM_DETAIL(claimId));
 }
 
-export async function getVerificationChallenge(foundItemId) {
+export async function getVerificationChallenge(claimId) {
   if (USE_MOCK) {
-    return getMockVerificationChallenge(foundItemId);
+    return getMockVerificationChallenge(claimId);
   }
 
-  return api.get(ENDPOINTS.VERIFICATION_CHALLENGE(foundItemId));
+  return api.get(ENDPOINTS.VERIFICATION_CHALLENGE(claimId));
+}
+
+export async function submitVerificationAnswer(verificationId, answer) {
+  if (USE_MOCK) {
+    throw new Error(
+      "Connect this action to your mock verification flow before using mock mode.",
+    );
+  }
+
+  return api.post(
+    `/ownership-verifications/${verificationId}/answer`,
+    { answer },
+  );
 }
 
 export async function verifyClaim(claimId, handoverInstructions) {
@@ -62,9 +69,9 @@ export async function verifyClaim(claimId, handoverInstructions) {
     return adminVerifyMockClaim(claimId, handoverInstructions);
   }
 
-  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
-    status: "VERIFIED",
-    handover_instructions: handoverInstructions,
+  // Backend review endpoint accepts APPROVED or REJECTED.
+  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
+    status: "APPROVED",
   });
 }
 
@@ -73,9 +80,8 @@ export async function rejectClaim(claimId, rejectionReason) {
     return adminRejectMockClaim(claimId, rejectionReason);
   }
 
-  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
+  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
     status: "REJECTED",
-    rejection_reason: rejectionReason,
   });
 }
 
@@ -92,6 +98,7 @@ export default {
   getMyClaims,
   getClaimById,
   getVerificationChallenge,
+  submitVerificationAnswer,
   verifyClaim,
   rejectClaim,
   getAllClaims,
