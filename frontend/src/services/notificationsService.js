@@ -1,12 +1,3 @@
-/**
- * Service for Targeted Notifications.
- *
- * PROPOSED FASTAPI INTEGRATION:
- * - GET   /api/notifications
- * - GET   /api/notifications/unread-count
- * - PATCH /api/notifications/{id}/read
- * - POST  /api/notifications/read-all
- */
 
 import api, { USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
@@ -30,7 +21,7 @@ export async function getUnreadCount(userId) {
     return getMockUnreadCount(userId || 1);
   }
 
-  return api.get(`${ENDPOINTS.NOTIFICATIONS}/unread-count`);
+  return api.get(ENDPOINTS.NOTIFICATION_UNREAD_COUNT);
 }
 
 export async function markAsRead(notificationId) {
@@ -46,7 +37,7 @@ export async function markAllAsRead(userId) {
     return markAllMockNotificationsRead(userId || 1);
   }
 
-  return api.post(ENDPOINTS.NOTIFICATIONS_READ_ALL);
+  return api.patch(ENDPOINTS.NOTIFICATIONS_READ_ALL);
 }
 
 export default {

@@ -1,12 +1,3 @@
-/**
- * Service for Automated Item Matching.
- *
- * PROPOSED FASTAPI INTEGRATION:
- * - GET   /api/matches/my-matches
- * - GET   /api/lost-items/{id}/matches
- * - GET   /api/found-items/{id}/matches
- * - PATCH /api/matches/{id}/status
- */
 
 import api, { USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
@@ -22,7 +13,9 @@ export async function getMyMatches(userId) {
     return listMockUserMatches(userId || 1);
   }
 
-  return api.get(ENDPOINTS.MY_MATCHES);
+  throw new Error(
+    "GET /matches/my-matches is not implemented in the FastAPI backend yet."
+  );
 }
 
 export async function getItemMatches(type, itemId) {
@@ -30,12 +23,9 @@ export async function getItemMatches(type, itemId) {
     return getMockItemMatches(type, itemId);
   }
 
-  const isLost = String(type).toLowerCase() === "lost";
-  const endpoint = isLost
-    ? ENDPOINTS.LOST_MATCHES(itemId)
-    : ENDPOINTS.FOUND_MATCHES(itemId);
-
-  return api.get(endpoint);
+  throw new Error(
+    "Item matching endpoints are not implemented in the FastAPI backend yet."
+  );
 }
 
 export async function updateMatchStatus(matchId, status) {
@@ -43,7 +33,9 @@ export async function updateMatchStatus(matchId, status) {
     return updateMockMatchStatus(matchId, status);
   }
 
-  return api.patch(ENDPOINTS.UPDATE_MATCH_STATUS(matchId), { status });
+  throw new Error(
+    "PATCH /matches/{id}/status is not implemented in the FastAPI backend yet."
+  );
 }
 
 export async function getAllMatches() {
@@ -51,7 +43,9 @@ export async function getAllMatches() {
     return listAllMockMatches();
   }
 
-  return api.get(ENDPOINTS.ADMIN_MATCHES);
+  throw new Error(
+    "GET /admin/matches is not implemented in the FastAPI backend yet."
+  );
 }
 
 export default {

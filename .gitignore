@@ -44,3 +44,8 @@ Thumbs.db
 .vscode/
 *.sublime-workspace
 *.sublime-project
+# Backend environment and Python files
+backend/.env
+backend/.venv/
+backend/__pycache__/
+*.py[cod]

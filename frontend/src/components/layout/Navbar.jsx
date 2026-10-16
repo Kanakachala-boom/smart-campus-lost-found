@@ -82,9 +82,12 @@ export function Navbar() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate("/login", { replace: true });
+    }
   };
 
   return (
@@ -157,8 +160,7 @@ export function Navbar() {
             <NavLink
               to="/admin"
               className={({ isActive }) =>
-                `app-navbar__link app-navbar__link--admin ${
-                  isActive ? "app-navbar__link--active" : ""
+                `app-navbar__link app-navbar__link--admin ${isActive ? "app-navbar__link--active" : ""
                 }`
               }
             >
@@ -240,9 +242,8 @@ export function Navbar() {
             <div className="app-navbar__user-badge">
               <span className="app-navbar__user-name">{user.name}</span>
               <span
-                className={`app-navbar__user-role ${
-                  isAdmin ? "app-navbar__user-role--admin" : ""
-                }`}
+                className={`app-navbar__user-role ${isAdmin ? "app-navbar__user-role--admin" : ""
+                  }`}
               >
                 {isAdmin ? "Admin" : "Student"}
               </span>

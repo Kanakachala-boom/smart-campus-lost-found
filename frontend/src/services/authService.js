@@ -1,22 +1,32 @@
+
 /**
  * Authentication service for The National Institute of Engineering (NIE), Mysuru.
  *
- * PROPOSED FASTAPI INTEGRATION CONTRACT (NOT YET IMPLEMENTED):
- * - POST /api/auth/login           -> { email, password } or OAuth2 form
- * - POST /api/auth/forgot-password -> { email }
- * - POST /api/auth/reset-password  -> { token, new_password }
- * - GET  /api/auth/me              -> Current user profile derived from JWT
+ * FastAPI endpoints:
+ * - POST /auth/login  -> { email, password }
+ * - POST /auth/register
+ * - GET  /auth/me     -> Current user profile derived from JWT
+ *
+ * Not yet implemented in the backend:
+ * - POST /auth/forgot-password
+ * - POST /auth/reset-password
  */
 
 import api, { ApiError, USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
-import { findMockUserByEmail, findMockUserById, mockUsers } from "./mock/mockData";
+
+import {
+  findMockUserByEmail,
+  findMockUserById,
+  mockUsers,
+} from "./mock/mockData";
+
 import { mockError, mockResponse } from "./mock/mockClient";
 import { readStorage, STORAGE_KEYS } from "../utils/storage";
 
 /**
- * Proposed FastAPI login format adapter.
- * Configurable via environment variable (default: "json").
+ * Login format supported by the backend.
+ * Current FastAPI implementation accepts JSON.
  */
 export const LOGIN_REQUEST_FORMAT =
   import.meta.env.VITE_AUTH_LOGIN_FORMAT?.toLowerCase() === "form"
@@ -24,18 +34,24 @@ export const LOGIN_REQUEST_FORMAT =
     : "json";
 
 /**
- * Authenticates NIE credentials.
+ * Authenticate an NIE user.
  *
- * @param {Object} credentials
- * @param {string} credentials.email
- * @param {string} credentials.password
- * @returns {Promise<{ access_token: string, token_type: string, user: Object }>}
+ * @param {{ email: string, password: string }} credentials
+ * @returns {Promise<Object>}
  */
 export async function login({ email, password }) {
   const normalizedEmail = email.trim().toLowerCase();
 
+  if (!normalizedEmail || !password) {
+    throw new ApiError("Please enter your email and password.", {
+      status: 400,
+    });
+  }
+
+  // Mock authentication
   if (USE_MOCK) {
     const user = findMockUserByEmail(normalizedEmail);
+
     if (!user || !password) {
       return mockError(
         "Invalid credentials. Please verify your NIE email and password.",
@@ -52,12 +68,14 @@ export async function login({ email, password }) {
 
   let responseData;
 
+  // OAuth2 form login, if explicitly configured
   if (LOGIN_REQUEST_FORMAT === "form") {
     const formData = new URLSearchParams();
     formData.append("username", normalizedEmail);
     formData.append("password", password);
 
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
+
     const response = await fetch(`${baseUrl}${ENDPOINTS.LOGIN}`, {
       method: "POST",
       headers: {
@@ -67,29 +85,47 @@ export async function login({ email, password }) {
     });
 
     if (!response.ok) {
-      const err = await response.json().catch(() => null);
-      throw new ApiError(err?.detail || "Invalid credentials.", {
-        status: response.status,
-      });
+      const errorData = await response.json().catch(() => null);
+
+      throw new ApiError(
+        errorData?.detail || "Invalid credentials.",
+        { status: response.status },
+      );
     }
 
     responseData = await response.json();
   } else {
+    // Current FastAPI backend accepts JSON: { email, password }
     responseData = await api.post(
       ENDPOINTS.LOGIN,
-      { email: normalizedEmail, password },
-      { auth: false },
+      {
+        email: normalizedEmail,
+        password,
+      },
+      {
+        auth: false,
+      },
     );
   }
 
+  // Fetch the user profile using the newly issued token if login
+  // did not already return the user.
   if (responseData?.access_token && !responseData?.user) {
     try {
-      const userProfile = await api.get(ENDPOINTS.ME, {
-        headers: { Authorization: `Bearer ${responseData.access_token}` },
+      const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
+
+      const response = await fetch(`${baseUrl}${ENDPOINTS.ME}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${responseData.access_token}`,
+        },
       });
-      responseData.user = userProfile;
+
+      if (response.ok) {
+        responseData.user = await response.json();
+      }
     } catch {
-      // Degrade gracefully if /me endpoint is pending backend implementation
+      // Login may still succeed if profile retrieval fails.
     }
   }
 
@@ -97,19 +133,22 @@ export async function login({ email, password }) {
 }
 
 /**
- * Submits a password recovery request for an NIE email.
+ * Request password recovery.
  *
- * Note: Does not confirm whether the email actually exists, to prevent
- * account enumeration.
+ * NOTE: The corresponding FastAPI endpoint is not implemented yet.
  *
  * @param {string} email
- * @returns {Promise<{ message: string }>}
  */
 export async function requestPasswordReset(email) {
   const normalizedEmail = email.trim().toLowerCase();
 
+  if (!normalizedEmail) {
+    throw new ApiError("Please enter your NIE email address.", {
+      status: 400,
+    });
+  }
+
   if (USE_MOCK) {
-    // Simulate server processing delay
     return mockResponse({
       message:
         "If an account exists for this NIE email, recovery instructions have been sent to your registered college email.",
@@ -118,20 +157,29 @@ export async function requestPasswordReset(email) {
 
   return api.post(
     ENDPOINTS.FORGOT_PASSWORD,
-    { email: normalizedEmail },
-    { auth: false },
+    {
+      email: normalizedEmail,
+    },
+    {
+      auth: false,
+    },
   );
 }
 
 /**
- * Resets the password using a reset token provided in the recovery link.
+ * Reset a password using a recovery token.
  *
- * @param {Object} params
- * @param {string} params.token
- * @param {string} params.newPassword
- * @returns {Promise<{ message: string }>}
+ * NOTE: The corresponding FastAPI endpoint is not implemented yet.
+ *
+ * @param {{ token: string, newPassword: string }} params
  */
 export async function resetPassword({ token, newPassword }) {
+  if (!token || !newPassword) {
+    throw new ApiError("A reset token and new password are required.", {
+      status: 400,
+    });
+  }
+
   if (USE_MOCK) {
     return mockResponse({
       message: "Password has been updated successfully.",
@@ -140,38 +188,55 @@ export async function resetPassword({ token, newPassword }) {
 
   return api.post(
     ENDPOINTS.RESET_PASSWORD,
-    { token: token || null, new_password: newPassword },
-    { auth: false },
+    {
+      token,
+      new_password: newPassword,
+    },
+    {
+      auth: false,
+    },
   );
 }
 
 /**
- * Restores or revalidates the current authenticated user's profile.
+ * Restore the currently authenticated user.
+ *
+ * In real mode, api.js should attach the saved JWT automatically.
  *
  * @returns {Promise<Object|null>}
  */
 export async function getCurrentUser() {
   if (USE_MOCK) {
     const currentToken = readStorage(STORAGE_KEYS.TOKEN);
+
     if (currentToken && typeof currentToken === "string") {
-      const match = currentToken.match(/mock\.jwt\.token\.(\d+)/);
+      const match = currentToken.match(/^mock\.jwt\.token\.(\d+)$/);
+
       if (match) {
-        const found = findMockUserById(match[1]);
-        if (found) return mockResponse(found);
+        const foundUser = findMockUserById(match[1]);
+
+        if (foundUser) {
+          return mockResponse(foundUser);
+        }
       }
     }
+
     const savedUser = readStorage(STORAGE_KEYS.USER);
-    if (savedUser) return mockResponse(savedUser);
-    return mockResponse(mockUsers[0]);
+
+    if (savedUser) {
+      return mockResponse(savedUser);
+    }
+
+    return mockResponse(mockUsers[0] ?? null);
   }
 
   return api.get(ENDPOINTS.ME);
 }
 
 /**
- * Logs out the user. Discards the JWT locally.
+ * Logout.
  *
- * @returns {Promise<boolean>}
+ * The caller/AuthContext is responsible for clearing stored credentials.
  */
 export async function logout() {
   return true;
