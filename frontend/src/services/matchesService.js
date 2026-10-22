@@ -48,9 +48,18 @@ export async function getAllMatches() {
   );
 }
 
+export async function reconcileMatches() {
+  if (USE_MOCK) {
+    return { status: "success", reconciled: 0 };
+  }
+
+  return api.post(ENDPOINTS.RECONCILE_MATCHES);
+}
+
 export default {
   getMyMatches,
   getItemMatches,
   updateMatchStatus,
   getAllMatches,
+  reconcileMatches,
 };

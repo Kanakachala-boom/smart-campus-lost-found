@@ -1,193 +1,63 @@
-# Campus Lost & Found System – Database
+# Database — Smart Campus Lost & Found System
+Institution: The National Institute of Engineering (NIE), Mysuru
 
-## Database Technology
+This directory contains the relational database schema, initial seed data, and configuration scripts for **MySQL 8.0+**.
 
-* MySQL
-* MySQL Workbench
-
-## Database Overview
-
-The database is designed for the On-Campus Personal Items Missing Report and Reclaim System. It stores information related to users, lost and found items, potential matches, claims, ownership verification, private communication, notifications, and successful item reclamation.
-
-## Tables
-
-### 1. Users
-
-Stores student and administrator account information.
-
-**Main information:**
-
-* User ID
-* Name
-* Email
-* Password
-* Phone
-* Role
-* Account status
-* Account creation date
-
-### 2. Lost Items
-
-Stores details of items reported as lost by students.
-
-**Main information:**
-
-* Lost item ID
-* User ID
-* Item title
-* Description
-* Category
-* Color
-* Brand
-* Lost location
-* Lost date and time
-* Image
-* Status
-
-### 3. Found Items
-
-Stores details of items found on campus.
-
-**Main information:**
-
-* Found item ID
-* Finder's user ID
-* Item title
-* Description
-* Category
-* Color
-* Brand
-* Found location
-* Found date and time
-* Image
-* Status
-
-### 4. Matches
-
-Stores potential matches between lost and found items.
-
-**Main information:**
-
-* Match ID
-* Lost item ID
-* Found item ID
-* Matching score
-* Match reason
-* Match status
-
-The matching score allows multiple possible matches to be ranked.
-
-### 5. Claims
-
-Stores claims made by users for found items.
-
-**Main information:**
-
-* Claim ID
-* Found item ID
-* Claimant ID
-* Match ID
-* Claim description
-* Claim status
-* Created and updated dates
-
-### 6. Ownership Verifications
-
-Stores information used to verify whether a claimant is the actual owner.
-
-**Main information:**
-
-* Verification ID
-* Claim ID
-* Verification question
-* Expected answer
-* Provided answer
-* Verification result
-* Verifier
-* Verification date
-
-### 7. Messages
-
-Stores private communication between the finder and claimant.
-
-**Main information:**
-
-* Message ID
-* Sender
-* Receiver
-* Claim ID
-* Message
-* Sent time
-* Read status
-
-### 8. Notifications
-
-Stores targeted notifications for users.
-
-**Examples:**
-
-* Potential match found
-* New claim
-* New message
-* Reclaim update
-
-Only the relevant user receives the notification.
-
-### 9. Reclaim Records
-
-Stores the final record of an item being returned to its owner.
-
-**Main information:**
-
-* Reclaim ID
-* Claim ID
-* Lost item ID
-* Found item ID
-* Owner ID
-* Finder ID
-* Verification ID
-* Reclaim date
-* Handover location
-* Status
-* Remarks
-
-## Main Database Flow
-
-User reports an item as lost or found.
-
-```text
-User
- ↓
-Lost / Found Item
- ↓
-Potential Match
- ↓
-Claim
- ↓
-Ownership Verification
- ↓
-Private Communication
- ↓
-Reclaim
+The standardized database name across configuration, schema, and application code is:
+```
+campus_lost_found
 ```
 
-## Relationships
+---
 
-* One user can create multiple lost-item reports.
-* One user can create multiple found-item reports.
-* A lost item can have potential matches with found items.
-* A found item can receive claims.
-* A claim can have an ownership verification.
-* Messages are associated with a particular claim.
-* Notifications are associated with a particular user.
-* A successful claim results in a reclaim record.
+## Database Architecture & Required Tables
 
-## Current Progress
+The schema (`database/schema.sql`) initializes the `campus_lost_found` database using `utf8mb4` character set and `InnoDB` engine with the following 10 core tables:
 
-* Database structure designed.
-* 9 tables created in MySQL Workbench.
-* Primary keys defined.
-* Foreign key relationships established.
-* Item status tracking implemented.
-* Matching score storage implemented.
-* Database schema prepared for future backend integration.
+1. **`users`**: Campus student, faculty, and administrative accounts with `@nie.ac.in` domain validation, USN / Staff IDs, bcrypt password hashes, and roles (`STUDENT`, `ADMIN`).
+2. **`lost_items`**: Lost item reports with category, description, location, confidential identifying marks, and lifecycle status (`ACTIVE`, `POTENTIAL_MATCH`, `RECLAIMED`, `CLOSED`).
+3. **`found_items`**: Found item reports with physical custody location (security desk/department office), handover preferences, and challenge question prompts.
+4. **`matches`**: Automated similarity scores computed by the FastAPI matching engine pairing lost and found reports. Enforces unique pair constraint (`uq_matches_pair`).
+5. **`claims`**: Ownership verification claims submitted by lost-item owners, tracking verification notes, claimant responses, status (`PENDING`, `VERIFIED`, `REJECTED`), and review notes.
+6. **`ownership_verifications`**: Formal audit records of proof inspections and verification outcomes conducted by security or finders.
+7. **`messages`**: Private, in-app messaging history between authorized claimants, finders, and administrators linked directly to the specific found-item report and claim.
+8. **`notifications`**: Targeted user-specific notifications for potential matches, claim status updates, and private chat messages with direct routing URLs (`/items/found/{id}`).
+9. **`reclaim_records`**: Final chain-of-custody handover confirmations recording owner, finder, date, and physical campus handover location.
+10. **`password_reset_tokens`**: Secure, single-use, 15-minute expiring SHA-256 tokens for institutional password recovery.
+
+---
+
+## Setup & Initialization Instructions (Windows PowerShell)
+
+Ensure the MySQL 8 service is running. In an Administrator PowerShell terminal:
+```powershell
+Start-Service MySQL80
+# or
+net start MySQL80
+```
+
+### Step 1: Initialize Schema & Tables
+From the project root:
+```powershell
+mysql -u root -p < database/schema.sql
+```
+*Creates the `campus_lost_found` database and all 10 required relational tables, foreign key constraints, indexes, and triggers.*
+
+### Step 2: (Optional) Populate Development Seed Data
+To populate verified development test accounts and realistic campus reports for testing:
+```powershell
+mysql -u root -p < database/seed.sql
+```
+
+#### Verified Test Accounts in `seed.sql`:
+All seeded accounts use password: `Password@123`
+- **Student A (Owner):** `2024is_kanakachala_a@nie.ac.in` (USN: `4NI21IS045`, Role: `STUDENT`)
+- **Student B (Finder):** `2024is_ananya_r@nie.ac.in` (USN: `4NI21IS012`, Role: `STUDENT`)
+- **Campus Security / Administrator:** `admin@nie.ac.in` (Staff ID: `NIE-STAFF-001`, Role: `ADMIN`)
+
+### Step 3: Verify Database Tables and Structure
+```powershell
+mysql -u root -p -e "USE campus_lost_found; SHOW TABLES;"
+```
+Expected output: 10 tables (`claims`, `found_items`, `lost_items`, `matches`, `messages`, `notifications`, `ownership_verifications`, `password_reset_tokens`, `reclaim_records`, `users`).
+

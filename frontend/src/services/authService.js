@@ -34,7 +34,39 @@ export const LOGIN_REQUEST_FORMAT =
     : "json";
 
 /**
- * Authenticate an NIE user.
+ * Registers a new NIE student/staff account.
+ *
+ * @param {Object} userData
+ * @param {string} userData.name
+ * @param {string} userData.student_staff_id
+ * @param {string} userData.email
+ * @param {string} [userData.phone]
+ * @param {string} userData.password
+ * @returns {Promise<{ access_token: string, token_type: string, user: Object }>}
+ */
+export async function register(userData) {
+  if (USE_MOCK) {
+    return mockResponse({
+      access_token: "mock.jwt.token.999",
+      token_type: "bearer",
+      user: {
+        user_id: 999,
+        name: userData.name,
+        email: userData.email,
+        student_staff_id: userData.student_staff_id,
+        phone: userData.phone || null,
+        role: "STUDENT",
+        is_active: true,
+        created_at: new Date().toISOString(),
+      },
+    });
+  }
+
+  return api.post(ENDPOINTS.REGISTER, userData, { auth: false });
+}
+
+/**
+ * Authenticates NIE credentials.
  *
  * @param {{ email: string, password: string }} credentials
  * @returns {Promise<Object>}
@@ -73,27 +105,7 @@ export async function login({ email, password }) {
     const formData = new URLSearchParams();
     formData.append("username", normalizedEmail);
     formData.append("password", password);
-
-    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
-
-    const response = await fetch(`${baseUrl}${ENDPOINTS.LOGIN}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formData.toString(),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-
-      throw new ApiError(
-        errorData?.detail || "Invalid credentials.",
-        { status: response.status },
-      );
-    }
-
-    responseData = await response.json();
+    responseData = await api.post(ENDPOINTS.LOGIN, formData, { auth: false });
   } else {
     // Current FastAPI backend accepts JSON: { email, password }
     responseData = await api.post(
@@ -243,6 +255,7 @@ export async function logout() {
 }
 
 export default {
+  register,
   login,
   requestPasswordReset,
   resetPassword,

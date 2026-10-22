@@ -48,6 +48,11 @@ export function FoundationCheck() {
                 Sign In
               </Button>
             </Link>
+            <Link to="/register">
+              <Button variant="secondary">
+                Register Account
+              </Button>
+            </Link>
             <Link to="/forgot-password">
               <Button variant="secondary" icon={Mail}>
                 Forgot Password

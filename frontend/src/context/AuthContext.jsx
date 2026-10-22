@@ -36,18 +36,22 @@ export function AuthProvider({ children }) {
   );
 
   const [isInitialising, setIsInitialising] = useState(true);
+  const [sessionError, setSessionError] = useState(null);
 
   // Clear authentication state and persisted session.
   const clearSession = useCallback(() => {
     setUser(null);
     setToken(null);
-
+    setSessionError(null);
     removeStorage(STORAGE_KEYS.TOKEN);
     removeStorage(STORAGE_KEYS.USER);
   }, []);
 
   // Save authenticated user and token.
   const persistSession = useCallback((accessToken, userRecord) => {
+    setToken(accessToken);
+    setUser(userRecord);
+    setSessionError(null);
     writeStorage(STORAGE_KEYS.TOKEN, accessToken);
     writeStorage(STORAGE_KEYS.USER, userRecord);
 
@@ -55,7 +59,7 @@ export function AuthProvider({ children }) {
     setUser(userRecord);
   }, []);
 
-  // Clear the session if the API reports an unauthorized request.
+  /* A 401 from an authenticated request means the token is gone or expired. */
   useEffect(() => {
     setUnauthorizedHandler(() => clearSession());
 
@@ -64,45 +68,66 @@ export function AuthProvider({ children }) {
     };
   }, [clearSession]);
 
-  // Restore and validate a saved session on application startup.
-  useEffect(() => {
-    let cancelled = false;
+  /**
+   * Revalidate a stored token.
+   * Defined outcomes:
+   * 1. No token: set isInitialising = false immediately (navigates to /login).
+   * 2. Valid token: updates user state, clears error, set isInitialising = false.
+   * 3. Invalid or expired token (401/403): clears invalid session, set isInitialising = false.
+   * 4. Backend unavailable / timeout / 5xx: retains stored session, sets sessionError, set isInitialising = false.
+   */
+  const restoreSession = useCallback(async () => {
+    setIsInitialising(true);
+    setSessionError(null);
 
-    async function restoreSession() {
-      if (!token) {
-        setIsInitialising(false);
-        return;
-      }
-
-      try {
-        const currentUser = await authService.getCurrentUser();
-
-        if (cancelled) return;
-
-        if (!currentUser) {
-          clearSession();
-          return;
-        }
-
-        setUser(currentUser);
-        writeStorage(STORAGE_KEYS.USER, currentUser);
-      } catch (error) {
-        if (!cancelled) {
-          clearSession();
-        }
-      } finally {
-        if (!cancelled) {
-          setIsInitialising(false);
-        }
-      }
+    const storedToken = readStorage(STORAGE_KEYS.TOKEN);
+    if (!storedToken) {
+      setUser(null);
+      setToken(null);
+      setIsInitialising(false);
+      return;
     }
 
-    restoreSession();
+    try {
+      const current = await authService.getCurrentUser();
+      if (current) {
+        setUser(current);
+        setToken(storedToken);
+        writeStorage(STORAGE_KEYS.USER, current);
+        setSessionError(null);
+      } else {
+        clearSession();
+      }
+    } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {
+        // Token is invalid, expired, revoked, or account is deactivated
+        clearSession();
+      } else {
+        // Backend unavailable, database operational error, or request timeout
+        const message =
+          error?.message ||
+          "Unable to connect to the campus server. Please ensure the backend and MySQL database are running.";
+        setSessionError(message);
+      }
+    } finally {
+      setIsInitialising(false);
+    }
+  }, [clearSession]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [token, clearSession]);
+  useEffect(() => {
+    restoreSession();
+  }, [restoreSession]);
+
+  const register = useCallback(
+    async (userData) => {
+      const result = await authService.register(userData);
+      if (result?.access_token && result?.user) {
+        persistSession(result.access_token, result.user);
+      }
+      return result;
+    },
+    [persistSession],
+  );
 
   // Login.
   const login = useCallback(
@@ -152,8 +177,12 @@ export function AuthProvider({ children }) {
       user,
       token,
       isInitialising,
+      sessionError,
+      retrySession: restoreSession,
+      clearSession,
       isAuthenticated: Boolean(token && user),
-      isAdmin,
+      isAdmin: user?.role === ROLES.ADMIN,
+      register,
       login,
       logout,
       requestPasswordReset,
@@ -163,12 +192,15 @@ export function AuthProvider({ children }) {
       user,
       token,
       isInitialising,
-      isAdmin,
+      sessionError,
+      restoreSession,
+      clearSession,
+      register,
       login,
-      logout,
       requestPasswordReset,
       resetPassword,
-    ]
+      logout,
+    ],
   );
 
   return (

@@ -1,197 +1,127 @@
-
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy import text
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
-import os
-
+from sqlalchemy import or_, desc
 from app.database import get_db
+from app.models.user import User
+from app.models.item import LostItem, FoundItem
+from app.models.claim import Claim
+from app.models.match import Match
+from app.models.notification import Notification
+from app.schemas.dashboard import UserDashboardResponse, UserDashboardMetrics
+from app.services.auth_service import get_current_user
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY",
-    "change-this-development-secret"
+from app.services.provenance import (
+    is_seed_demo_lost,
+    is_seed_demo_found,
+    is_seed_demo_match,
+    is_seed_demo_claim,
+    is_seed_demo_notification,
 )
-ALGORITHM = "HS256"
 
+router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
-    try:
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
-        user_id = int(payload.get("sub"))
-    except (JWTError, TypeError, ValueError):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-
-    user = db.execute(
-        text("""
-            SELECT user_id, name, email, role
-            FROM users
-            WHERE user_id = :user_id
-        """),
-        {"user_id": user_id}
-    ).mappings().first()
-
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="User not found"
-        )
-
-    return dict(user)
-
-
-@router.get("")
-def get_dashboard(
+@router.get("", response_model=UserDashboardResponse)
+def get_user_dashboard(
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    user_id = user["user_id"]
+    """Calculates personalized dashboard metrics and recent user activity."""
+    uid = current_user.user_id
 
-    active_lost = db.execute(
-        text("""
-            SELECT COUNT(*)
-            FROM lost_items
-            WHERE user_id = :user_id
-              AND UPPER(status) IN ('ACTIVE', 'OPEN', 'LOST')
-        """),
-        {"user_id": user_id}
-    ).scalar() or 0
-
-    active_found = db.execute(
-        text("""
-            SELECT COUNT(*)
-            FROM found_items
-            WHERE user_id = :user_id
-              AND UPPER(status) IN ('ACTIVE', 'OPEN', 'FOUND')
-        """),
-        {"user_id": user_id}
-    ).scalar() or 0
-
-    pending_claims = db.execute(
-        text("""
-            SELECT COUNT(*)
-            FROM claims
-            WHERE claimant_id = :user_id
-              AND UPPER(verification_status) = 'PENDING'
-        """),
-        {"user_id": user_id}
-    ).scalar() or 0
-
-    unread_notifications = db.execute(
-        text("""
-            SELECT COUNT(*)
-            FROM notifications
-            WHERE user_id = :user_id
-              AND is_read = 0
-        """),
-        {"user_id": user_id}
-    ).scalar() or 0
-
-    potential_matches = db.execute(
-        text("""
-            SELECT COUNT(DISTINCT m.match_id)
-            FROM matches m
-            LEFT JOIN lost_items l ON l.lost_id = m.lost_id
-            LEFT JOIN found_items f ON f.found_id = m.found_id
-            WHERE (l.user_id = :user_id OR f.user_id = :user_id)
-              AND UPPER(m.status) IN ('PENDING', 'POTENTIAL', 'NEW')
-        """),
-        {"user_id": user_id}
-    ).scalar() or 0
-
-    recent_lost = db.execute(
-        text("""
-            SELECT
-                lost_id AS item_id,
-                item_name,
-                category,
-                location,
-                status,
-                created_at,
-                'lost' AS report_type
-            FROM lost_items
-            WHERE user_id = :user_id
-            ORDER BY created_at DESC
-            LIMIT 5
-        """),
-        {"user_id": user_id}
-    ).mappings().all()
-
-    recent_found = db.execute(
-        text("""
-            SELECT
-                found_id AS item_id,
-                category,
-                description AS item_name,
-                location,
-                status,
-                created_at,
-                'found' AS report_type
-            FROM found_items
-            WHERE user_id = :user_id
-            ORDER BY created_at DESC
-            LIMIT 5
-        """),
-        {"user_id": user_id}
-    ).mappings().all()
-
-    recent_reports = [
-        dict(row) for row in recent_lost
-    ] + [
-        dict(row) for row in recent_found
+    user_lost = [
+        item for item in db.query(LostItem).filter(
+            LostItem.user_id == uid,
+            LostItem.status.in_(["ACTIVE", "POTENTIAL_MATCH"])
+        ).all() if not is_seed_demo_lost(item)
     ]
+    active_lost = len(user_lost)
 
-    recent_reports.sort(
-        key=lambda row: row["created_at"],
-        reverse=True
+    user_found = [
+        item for item in db.query(FoundItem).filter(
+            FoundItem.user_id == uid,
+            FoundItem.status.in_(["AVAILABLE", "POTENTIAL_MATCH"])
+        ).all() if not is_seed_demo_found(item)
+    ]
+    active_found = len(user_found)
+
+    user_claims = [
+        c for c in db.query(Claim).filter(Claim.claimant_user_id == uid).all()
+        if not is_seed_demo_claim(c)
+    ]
+    pending_claims = len([c for c in user_claims if c.status == "PENDING"])
+
+    matches = (
+        db.query(Match)
+        .join(LostItem, Match.lost_item_id == LostItem.lost_item_id)
+        .join(FoundItem, Match.found_item_id == FoundItem.found_item_id)
+        .filter(
+            or_(LostItem.user_id == uid, FoundItem.user_id == uid),
+            Match.status == "PENDING"
+        )
+        .all()
     )
-    recent_reports = recent_reports[:5]
+    potential_matches = len([m for m in matches if not is_seed_demo_match(m)])
 
-    recent_claims = db.execute(
-        text("""
-            SELECT
-                c.claim_id,
-                c.match_id,
-                c.verification_score,
-                c.verification_status,
-                c.created_at,
-                m.lost_id,
-                m.found_id
-            FROM claims c
-            LEFT JOIN matches m ON m.match_id = c.match_id
-            WHERE c.claimant_id = :user_id
-            ORDER BY c.created_at DESC
-            LIMIT 5
-        """),
-        {"user_id": user_id}
-    ).mappings().all()
+    notifs = db.query(Notification).filter(
+        Notification.user_id == uid,
+        Notification.is_read == False
+    ).all()
+    unread_notifs = len([n for n in notifs if not is_seed_demo_notification(n)])
 
-    return {
-        "user": user,
-        "metrics": {
-            "activeLost": active_lost,
-            "activeFound": active_found,
-            "pendingClaims": pending_claims,
-            "potentialMatches": potential_matches,
-            "unreadNotifications": unread_notifications
-        },
-        "recentReports": recent_reports,
-        "recentClaims": [
-            dict(row) for row in recent_claims
-        ]
-    }
+    # Recent user reports (excluding seed demo records)
+    all_recent_lost = [l for l in db.query(LostItem).filter(LostItem.user_id == uid).order_by(desc(LostItem.created_at)).all() if not is_seed_demo_lost(l)]
+    all_recent_found = [f for f in db.query(FoundItem).filter(FoundItem.user_id == uid).order_by(desc(FoundItem.created_at)).all() if not is_seed_demo_found(f)]
+    recent_lost = all_recent_lost[:3]
+    recent_found = all_recent_found[:3]
+
+    formatted_reports = []
+    for l in recent_lost:
+        formatted_reports.append({
+            "id": l.lost_item_id,
+            "lost_item_id": l.lost_item_id,
+            "type": "lost",
+            "item_name": l.item_name,
+            "category": l.category,
+            "location": l.location_lost,
+            "date": str(l.date_lost),
+            "status": l.status,
+            "created_at": l.created_at.isoformat(),
+        })
+    for f in recent_found:
+        formatted_reports.append({
+            "id": f.found_item_id,
+            "found_item_id": f.found_item_id,
+            "type": "found",
+            "item_name": f.item_name,
+            "category": f.category,
+            "location": f.location_found,
+            "date": str(f.date_found),
+            "status": f.status,
+            "created_at": f.created_at.isoformat(),
+        })
+
+    formatted_reports.sort(key=lambda x: x["created_at"], reverse=True)
+
+    # Recent claims
+    recent_claims_list = [c for c in db.query(Claim).filter(Claim.claimant_user_id == uid).order_by(desc(Claim.created_at)).all() if not is_seed_demo_claim(c)][:3]
+    formatted_claims = []
+    for c in recent_claims_list:
+        formatted_claims.append({
+            "claim_id": c.claim_id,
+            "found_item_id": c.found_item_id,
+            "item_name": c.found_item.item_name if c.found_item else "Item",
+            "status": c.status,
+            "created_at": c.created_at.isoformat(),
+        })
+
+    return UserDashboardResponse(
+        metrics=UserDashboardMetrics(
+            activeLost=active_lost,
+            activeFound=active_found,
+            pendingClaims=pending_claims,
+            potentialMatches=potential_matches,
+            unreadNotifications=unread_notifs,
+        ),
+        recentReports=formatted_reports,
+        recentClaims=formatted_claims,
+    )

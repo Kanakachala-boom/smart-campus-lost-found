@@ -1,185 +1,80 @@
-
-import os
-
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from sqlalchemy import text
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
+from sqlalchemy import desc
 from app.database import get_db
+from app.models.user import User
+from app.models.notification import Notification
+from app.schemas.notification import NotificationResponse, UnreadCountResponse
+from app.services.auth_service import get_current_user
+from app.services.provenance import is_seed_demo_notification
 
-router = APIRouter(prefix="/notifications", tags=["Notifications"])
+router = APIRouter(prefix="/api/notifications", tags=["Notifications"])
 
-SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY",
-    "change-this-development-secret",
-)
-ALGORITHM = "HS256"
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
+@router.get("", response_model=List[NotificationResponse])
+def get_user_notifications(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    try:
-        payload = jwt.decode(
-            token, SECRET_KEY, algorithms=[ALGORITHM]
-        )
-        user_id = int(payload["sub"])
-    except (JWTError, KeyError, TypeError, ValueError):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token",
-        )
-
-    user = db.execute(
-        text("SELECT user_id FROM users WHERE user_id = :uid"),
-        {"uid": user_id},
-    ).first()
-
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    return user_id
-
-
-@router.get("")
-def get_my_notifications(
-    user_id: int = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    rows = db.execute(
-        text("""
-            SELECT *
-            FROM notifications
-            WHERE user_id = :uid
-            ORDER BY notification_id DESC
-        """),
-        {"uid": user_id},
-    ).mappings().all()
-
-    return [dict(row) for row in rows]
-
-
-@router.get("/unread-count")
-def get_unread_count(
-    user_id: int = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    rows = db.execute(
-        text("""
-            SELECT *
-            FROM notifications
-            WHERE user_id = :uid
-        """),
-        {"uid": user_id},
-    ).mappings().all()
-
-    # Determine unread state from the columns available in the table.
-    if not rows:
-        return {"unread_count": 0}
-
-    first = dict(rows[0])
-
-    if "is_read" in first:
-        count = sum(not bool(row["is_read"]) for row in rows)
-    elif "read_status" in first:
-        count = sum(
-            str(row["read_status"]).upper() in {"UNREAD", "FALSE", "0"}
-            for row in rows
-        )
-    else:
-        raise HTTPException(
-            status_code=500,
-            detail="Notifications table needs a recognized read-status column",
-        )
-
-    return {"unread_count": count}
-
-
-@router.patch("/{notification_id}/read")
-def mark_notification_read(
-    notification_id: int,
-    user_id: int = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    columns = db.execute(
-        text("SHOW COLUMNS FROM notifications")
-    ).mappings().all()
-
-    column_names = {column["Field"] for column in columns}
-
-    if "is_read" in column_names:
-        update_sql = """
-            UPDATE notifications
-            SET is_read = 1
-            WHERE notification_id = :nid AND user_id = :uid
-        """
-    elif "read_status" in column_names:
-        update_sql = """
-            UPDATE notifications
-            SET read_status = 'READ'
-            WHERE notification_id = :nid AND user_id = :uid
-        """
-    else:
-        raise HTTPException(
-            status_code=500,
-            detail="No recognized read-status column found",
-        )
-
-    result = db.execute(
-        text(update_sql),
-        {"nid": notification_id, "uid": user_id},
+    """
+    CRITICAL PRIVACY INVARIANT:
+    Retrieves user-specific notifications strictly belonging to the authenticated recipient.
+    Global broadcasting is prohibited.
+    """
+    notifs = (
+        db.query(Notification)
+        .filter(Notification.user_id == current_user.user_id)
+        .order_by(desc(Notification.created_at))
+        .all()
     )
+    return [n for n in notifs if not is_seed_demo_notification(n)]
 
-    if result.rowcount == 0:
-        db.rollback()
-        raise HTTPException(
-            status_code=404,
-            detail="Notification not found",
-        )
-
-    db.commit()
-
-    return {"message": "Notification marked as read"}
-
-
-@router.patch("/read-all")
-def mark_all_notifications_read(
-    user_id: int = Depends(get_current_user),
+@router.get("/unread-count", response_model=UnreadCountResponse)
+def get_unread_notification_count(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    columns = db.execute(
-        text("SHOW COLUMNS FROM notifications")
-    ).mappings().all()
+    """Returns the unread notification count for the current user."""
+    notifs = (
+        db.query(Notification)
+        .filter(Notification.user_id == current_user.user_id, Notification.is_read == False)
+        .all()
+    )
+    real_count = len([n for n in notifs if not is_seed_demo_notification(n)])
+    return UnreadCountResponse(unread_count=real_count)
 
-    column_names = {column["Field"] for column in columns}
-
-    if "is_read" in column_names:
-        update_sql = """
-            UPDATE notifications
-            SET is_read = 1
-            WHERE user_id = :uid AND is_read = 0
-        """
-    elif "read_status" in column_names:
-        update_sql = """
-            UPDATE notifications
-            SET read_status = 'READ'
-            WHERE user_id = :uid AND read_status = 'UNREAD'
-        """
-    else:
+@router.patch("/{notification_id}/read", response_model=NotificationResponse)
+def mark_notification_as_read(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Marks a single notification as read, enforcing user ownership."""
+    notif = (
+        db.query(Notification)
+        .filter(Notification.notification_id == notification_id, Notification.user_id == current_user.user_id)
+        .first()
+    )
+    if not notif:
         raise HTTPException(
-            status_code=500,
-            detail="No recognized read-status column found",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found or access denied.",
         )
 
-    result = db.execute(update_sql, {"uid": user_id})
+    notif.is_read = True
     db.commit()
+    db.refresh(notif)
+    return notif
 
-    return {
-        "message": "All notifications marked as read",
-        "updated_count": result.rowcount,
-    }
+@router.post("/read-all")
+def mark_all_notifications_as_read(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Marks all notifications for the current authenticated user as read."""
+    db.query(Notification).filter(
+        Notification.user_id == current_user.user_id,
+        Notification.is_read == False
+    ).update({"is_read": True})
+    db.commit()
+    return {"success": True}

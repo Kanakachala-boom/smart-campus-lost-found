@@ -11,6 +11,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import FoundationCheck from "./pages/FoundationCheck";
 import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AuthTest from "./pages/auth/AuthTest";
@@ -26,23 +27,90 @@ import MyClaims from "./pages/claims/MyClaims";
 import ClaimDetail from "./pages/claims/ClaimDetail";
 import ClaimChat from "./pages/chat/ClaimChat";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
+import useAuth from "./hooks/useAuth";
+import { ErrorState, LoadingState } from "./components/common/StateViews";
+import Button from "./components/common/Button";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+
+import LiveNotificationToast from "./components/common/LiveNotificationToast";
+
+function RootRoute() {
+  const {
+    isAuthenticated,
+    isInitialising,
+    isAdmin,
+    sessionError,
+    retrySession,
+    clearSession,
+    token,
+  } = useAuth();
+
+  if (isInitialising) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <LoadingState message="Checking campus session…" />
+      </div>
+    );
+  }
+
+  if (sessionError) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "var(--spacing-lg, 1.5rem)",
+          gap: "1.25rem",
+        }}
+      >
+        <ErrorState
+          title="Campus Server Unavailable"
+          message={sessionError}
+          onRetry={retrySession}
+        />
+        {token && (
+          <Button variant="ghost" size="sm" onClick={clearSession}>
+            Clear saved session & go to Login
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace />;
+  }
+
+  return <Navigate to="/login" replace />;
+}
 
 export function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <LiveNotificationToast />
           <a className="skip-link" href="#main-content">
             Skip to main content
           </a>
           <main id="main-content">
             <Routes>
-              {/* Root directs to Dashboard when logged in, or Login via ProtectedRoute */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              {/* Root directs to /login when unauthenticated, or appropriate dashboard when logged in */}
+              <Route path="/" element={<RootRoute />} />
 
-              {/* Stage 2 NIE Authentication Routes */}
+              {/* NIE Authentication Routes */}
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route
@@ -181,7 +249,7 @@ export function App() {
               <Route path="/foundation-check" element={<FoundationCheck />} />
 
               {/* Fallback */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<RootRoute />} />
             </Routes>
           </main>
         </BrowserRouter>

@@ -7,44 +7,7 @@
 
 import { mockResponse, mockError } from "./mockClient";
 
-export let mockMessages = [
-  {
-    message_id: 1,
-    claim_id: 1002,
-    sender_id: 3,
-    sender_name: "South Security Desk (Admin)",
-    sender_role: "ADMIN",
-    text: "Hello Kanakachala, your claim verification for the HP calculator has been approved. The item is safely stored at the South Security Office.",
-    created_at: "2026-09-13 10:20:00",
-  },
-  {
-    message_id: 2,
-    claim_id: 1002,
-    sender_id: 1,
-    sender_name: "Kanakachala A",
-    sender_role: "STUDENT",
-    text: "Thank you Sir! What documents do I need to present for physical handover?",
-    created_at: "2026-09-13 10:25:00",
-  },
-  {
-    message_id: 3,
-    claim_id: 1002,
-    sender_id: 3,
-    sender_name: "South Security Desk (Admin)",
-    sender_role: "ADMIN",
-    text: "Please bring your original physical NIE Student ID card and sign the campus recovery register at the desk.",
-    created_at: "2026-09-13 10:28:00",
-  },
-  {
-    message_id: 4,
-    claim_id: 1001,
-    sender_id: 1,
-    sender_name: "Kanakachala A",
-    sender_role: "STUDENT",
-    text: "I have submitted the proof description for the bike keys. Let me know if you need any additional details.",
-    created_at: "2026-09-14 11:22:00",
-  },
-];
+export let mockMessages = [];
 
 export function listMockClaimMessages(claimId) {
   const cid = Number(claimId);

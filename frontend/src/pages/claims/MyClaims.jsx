@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   FileSearch,
   MessageSquare,
   Package,
@@ -14,6 +15,7 @@ import useAuth from "../../hooks/useAuth";
 import claimsService from "../../services/claimsService";
 import { CLAIM_STATUS } from "../../utils/constants";
 import { CLAIM_STATUS_META } from "../../utils/statusMaps";
+import { getFullImageUrl } from "../../utils/imageUrl";
 import "./MyClaims.css";
 
 const TABS = [
@@ -81,6 +83,23 @@ export function MyClaims() {
   return (
     <AppLayout>
       <div className="my-claims-page">
+        <div style={{ marginBottom: "var(--space-3)" }}>
+          <Link
+            to="/dashboard"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "var(--text-sm)",
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
         <div className="my-claims-header">
           <h1 className="my-claims-title">My Submitted Claims</h1>
           <p className="my-claims-sub">
@@ -144,7 +163,7 @@ export function MyClaims() {
                   <div className="my-claim-card__left">
                     {claim.item?.image_url ? (
                       <img
-                        src={claim.item.image_url}
+                        src={getFullImageUrl(claim.item.image_url)}
                         alt={claim.item.item_name}
                         className="my-claim-card__thumb"
                       />

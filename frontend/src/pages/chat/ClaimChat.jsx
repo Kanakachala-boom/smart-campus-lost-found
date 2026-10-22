@@ -20,6 +20,8 @@ export function ClaimChat() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
 
+  const [sendError, setSendError] = useState(null);
+
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -51,8 +53,23 @@ export function ClaimChat() {
     }
 
     loadData();
+
+    // Poll for new messages every 4 seconds
+    const interval = setInterval(async () => {
+      try {
+        const msgsRes = await messagesService.getClaimMessages(claimId);
+        if (!cancelled) {
+          const list = Array.isArray(msgsRes?.data) ? msgsRes.data : Array.isArray(msgsRes) ? msgsRes : [];
+          setMessages(list);
+        }
+      } catch {
+        // Silently ignore background poll errors
+      }
+    }, 4000);
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [claimId]);
 
@@ -67,14 +84,15 @@ export function ClaimChat() {
     const messageText = inputText.trim();
     setInputText("");
     setIsSending(true);
+    setSendError(null);
 
     try {
       const res = await messagesService.sendClaimMessage(claimId, messageText, user);
       const newMsg = res?.data || res;
       setMessages((prev) => [...prev, newMsg]);
-    } catch {
-      // Restore input on failure
+    } catch (err) {
       setInputText(messageText);
+      setSendError(err.message || "Failed to send message. Please try again.");
     } finally {
       setIsSending(false);
     }
@@ -146,6 +164,12 @@ export function ClaimChat() {
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {sendError && (
+              <div style={{ padding: "8px 12px", margin: "0 16px 8px", backgroundColor: "var(--color-danger-soft, rgba(239, 68, 68, 0.1))", color: "var(--color-danger, #ef4444)", borderRadius: "var(--radius-md)", fontSize: "var(--text-xs)" }}>
+                {sendError}
+              </div>
+            )}
 
             {/* Input Form */}
             <form className="claim-chat-input-area" onSubmit={handleSendMessage}>

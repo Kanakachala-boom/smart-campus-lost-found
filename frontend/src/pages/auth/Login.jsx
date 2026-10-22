@@ -7,7 +7,7 @@
  * Registration is intentionally removed; all accounts are authorized institutional logins.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertCircle,
@@ -25,7 +25,7 @@ import { isValidNieEmail } from "../../utils/validators";
 import "./Login.css";
 
 export function Login() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, isAdmin, isInitialising } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,7 +39,15 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const redirectTo = location.state?.from?.pathname || "/auth-test";
+  const defaultTarget = isAdmin ? "/admin" : "/dashboard";
+  const fromPath = location.state?.from?.pathname;
+  const redirectTo = (fromPath && fromPath !== "/login") ? fromPath : defaultTarget;
+
+  useEffect(() => {
+    if (isAuthenticated && !isInitialising) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [isAuthenticated, isInitialising, navigate, redirectTo]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -237,10 +245,13 @@ export function Login() {
 
             <div className="auth-card__footer">
               <p className="auth-institutional-note">
-                Institutional login portal for verified students and staff of NIE, Mysuru.
+                New user?{" "}
+                <Link to="/register" style={{ fontWeight: 600, color: "var(--color-primary-600)" }}>
+                  Register your NIE account
+                </Link>
               </p>
               <p className="auth-card__sublink">
-                <Link to="/" className="auth-link--muted">
+                <Link to="/foundation-check" className="auth-link--muted">
                   &larr; Return to Foundation Check
                 </Link>
               </p>

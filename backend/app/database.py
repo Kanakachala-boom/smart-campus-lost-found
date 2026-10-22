@@ -1,40 +1,59 @@
+import logging
+from typing import Generator, Tuple
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from app.config import DATABASE_URL, DB_PASSWORD
 
-import os
+logger = logging.getLogger("smart_campus.database")
 
-from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-
-load_dotenv()
-
-DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "3306")
-DB_NAME = os.getenv("DB_NAME", "campus_lost_found")
-
-DATABASE_URL = (
-    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}"
-    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
+# Create engine with resilient pooling parameters
+connect_args = {}
+db_url_str = str(DATABASE_URL)
+if "sqlite" in db_url_str:
+    connect_args["check_same_thread"] = False
+elif "mysql" in db_url_str:
+    connect_args["connect_timeout"] = 5
 
 engine = create_engine(
     DATABASE_URL,
+    connect_args=connect_args,
     pool_pre_ping=True,
+    pool_recycle=3600,
+    echo=False
 )
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-
-def get_db():
+def get_db() -> Generator[Session, None, None]:
+    """FastAPI dependency that yields a database session and safely closes it."""
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+def check_db_connection() -> Tuple[bool, str | None]:
+    """
+    Tests active connectivity to the configured database.
+    Returns (True, None) if reachable, or (False, error_details) if connection failed.
+    """
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return True, None
+    except Exception as e:
+        err_msg = str(e)
+        if DB_PASSWORD and DB_PASSWORD in err_msg:
+            err_msg = err_msg.replace(DB_PASSWORD, "******")
+        logger.warning(f"Database connection check failed: {err_msg}")
+        return False, err_msg
+
+def init_db():
+    """Attempts to create all tables defined in SQLAlchemy models if database is reachable."""
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables initialized successfully via SQLAlchemy.")
+    except Exception as e:
+        logger.warning(f"Could not auto-create tables via SQLAlchemy (MySQL may be offline or credentials not set): {e}")

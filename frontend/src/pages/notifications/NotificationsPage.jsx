@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowLeft,
   Bell,
   Sparkles,
   CheckCircle2,
@@ -26,9 +27,13 @@ export default function NotificationsPage() {
   const [updatingId, setUpdatingId] = useState(null);
 
   const fetchNotifications = useCallback(async () => {
+    if (!user?.user_id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const response = await notificationsService.getNotifications(user?.user_id || 1);
+      const response = await notificationsService.getNotifications(user.user_id);
       const data = response?.data || response || [];
       setNotifications(data);
       setError(null);
@@ -42,8 +47,12 @@ export default function NotificationsPage() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (!user?.user_id) {
+        setLoading(false);
+        return;
+      }
       try {
-        const response = await notificationsService.getNotifications(user?.user_id || 1);
+        const response = await notificationsService.getNotifications(user.user_id);
         if (!cancelled) {
           const data = response?.data || response || [];
           setNotifications(data);
@@ -115,7 +124,24 @@ export default function NotificationsPage() {
   return (
     <AppLayout>
       <div className="notifications-page">
-      <div className="notifications-page__header">
+        <div style={{ marginBottom: "var(--space-3)" }}>
+          <Link
+            to="/dashboard"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "var(--text-sm)",
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
+        <div className="notifications-page__header">
         <div className="notifications-page__title-group">
           <Bell size={24} style={{ color: "var(--color-primary)" }} />
           <h1 className="notifications-page__title">Notifications</h1>

@@ -4,6 +4,7 @@ import Button from "../common/Button";
 import FormField from "../forms/FormField";
 import ImageUpload from "../forms/ImageUpload";
 import { getTodayDateString } from "../../utils/itemOptions";
+import { getFullImageUrl } from "../../utils/imageUrl";
 import "./ClaimForm.css";
 
 export function ClaimForm({
@@ -108,7 +109,7 @@ export function ClaimForm({
         <div className="claim-item-context">
           {foundItem.image_url ? (
             <img
-              src={foundItem.image_url}
+              src={getFullImageUrl(foundItem.image_url)}
               alt={foundItem.item_name}
               className="claim-item-context__img"
             />

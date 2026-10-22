@@ -85,6 +85,14 @@ export async function rejectClaim(claimId, rejectionReason) {
   });
 }
 
+export async function getFoundItemClaims(foundItemId) {
+  if (USE_MOCK) {
+    return [];
+  }
+
+  return api.get(ENDPOINTS.FOUND_ITEM_CLAIMS(foundItemId));
+}
+
 export async function getAllClaims() {
   if (USE_MOCK) {
     return listAllMockClaims();
@@ -98,7 +106,7 @@ export default {
   getMyClaims,
   getClaimById,
   getVerificationChallenge,
-  submitVerificationAnswer,
+  getFoundItemClaims,
   verifyClaim,
   rejectClaim,
   getAllClaims,

@@ -94,22 +94,11 @@ export function ForgotPassword() {
                     aria-hidden="true"
                   />
                   <div>
+                    <h4 style={{ margin: "0 0 6px 0", fontWeight: 600 }}>Recovery Link Dispatched</h4>
                     <p className="auth-recovery-success__text">
-                      If an account exists for this NIE email, recovery
-                      instructions have been sent to your registered college email.
+                      If an account matches the details provided, password reset instructions will be sent to the registered contact. Please check your inbox and spam folder.
                     </p>
                   </div>
-                </div>
-
-                <div className="auth-recovery-testing-note">
-                  <p className="auth-recovery-testing-desc">
-                    Stage 2 Demo / Testing:
-                  </p>
-                  <Link to="/reset-password">
-                    <Button variant="secondary" size="sm" fullWidth>
-                      Proceed to Reset Password Page
-                    </Button>
-                  </Link>
                 </div>
 
                 <div className="auth-card__footer">

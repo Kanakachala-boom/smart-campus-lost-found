@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ExternalLink, FilePlus2, Package } from "lucide-react";
+import { ArrowLeft, CheckCircle, ExternalLink, FilePlus2, Package } from "lucide-react";
 import AppLayout from "../../components/layout/AppLayout";
 import StatusBadge from "../../components/common/StatusBadge";
 import Button from "../../components/common/Button";
 import { LoadingState, ErrorState, EmptyState } from "../../components/common/StateViews";
 import useAuth from "../../hooks/useAuth";
 import reportsService from "../../services/reportsService";
+import itemsService from "../../services/itemsService";
 import { ITEM_STATUS_META } from "../../utils/statusMaps";
+import { getFullImageUrl } from "../../utils/imageUrl";
 import "./MyReports.css";
 
 const REPORT_TABS = [
@@ -26,6 +28,7 @@ export function MyReports() {
   const [reports, setReports] = useState([]);
   const [activeTab, setActiveTab] = useState("ALL");
   const [isLoading, setIsLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -64,6 +67,28 @@ export function MyReports() {
     };
   }, [user]);
 
+  const handleQuickStatus = async (item, newStatus) => {
+    const isLost = item.type === "lost";
+    const prompt = isLost
+      ? "Confirm you have recovered this lost item?"
+      : "Confirm this found item has been returned to its owner?";
+    if (!window.confirm(prompt)) return;
+
+    setUpdatingId(`${item.type}-${item.id}`);
+    try {
+      await itemsService.updateItemStatus(item.type, item.id, newStatus);
+      setReports((prev) =>
+        prev.map((r) =>
+          r.type === item.type && r.id === item.id ? { ...r, status: newStatus } : r
+        )
+      );
+    } catch (err) {
+      alert(err.message || "Failed to update item status.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const filteredReports = reports.filter((item) => {
     if (activeTab === "ALL") return true;
     if (activeTab === "lost" || activeTab === "found") {
@@ -89,6 +114,23 @@ export function MyReports() {
   return (
     <AppLayout>
       <div className="my-reports-page">
+        <div style={{ marginBottom: "var(--space-3)" }}>
+          <Link
+            to="/dashboard"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "var(--text-sm)",
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
         <div className="my-reports-header">
           <div>
             <h1 className="my-reports-title">My Reported Items</h1>
@@ -169,7 +211,7 @@ export function MyReports() {
                   <div className="my-report-card__left">
                     {item.image_url ? (
                       <img
-                        src={item.image_url}
+                        src={getFullImageUrl(item.image_url)}
                         alt={item.item_name}
                         className="my-report-card__thumb"
                       />
@@ -206,11 +248,35 @@ export function MyReports() {
 
                   <div className="my-report-card__right">
                     <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
-                    <Link to={`/items/${item.type}/${item.id}`}>
-                      <Button variant="outline" size="sm" icon={ExternalLink}>
-                        View Details
-                      </Button>
-                    </Link>
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {isLost && (item.status === "ACTIVE" || item.status === "POTENTIAL_MATCH") && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={CheckCircle}
+                          isLoading={updatingId === `${item.type}-${item.id}`}
+                          onClick={() => handleQuickStatus(item, "RECLAIMED")}
+                        >
+                          Mark Recovered
+                        </Button>
+                      )}
+                      {!isLost && (item.status === "AVAILABLE" || item.status === "POTENTIAL_MATCH") && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon={CheckCircle}
+                          isLoading={updatingId === `${item.type}-${item.id}`}
+                          onClick={() => handleQuickStatus(item, "RETURNED")}
+                        >
+                          Mark Returned
+                        </Button>
+                      )}
+                      <Link to={`/items/${item.type}/${item.id}`}>
+                        <Button variant="outline" size="sm" icon={ExternalLink}>
+                          View Details
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );

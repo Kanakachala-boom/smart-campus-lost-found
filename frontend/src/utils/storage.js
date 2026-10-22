@@ -17,8 +17,12 @@ export const STORAGE_KEYS = {
 export function readStorage(key, fallback = null) {
   try {
     const raw = window.localStorage.getItem(key);
-    if (raw === null) return fallback;
-    return JSON.parse(raw);
+    if (raw === null || raw === undefined) return fallback;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw || fallback;
+    }
   } catch {
     return fallback;
   }

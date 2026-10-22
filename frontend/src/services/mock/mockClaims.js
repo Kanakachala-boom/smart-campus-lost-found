@@ -11,61 +11,7 @@ import { CLAIM_STATUS } from "../../utils/constants";
 import { mockFoundItems } from "./mockItems";
 
 // In-memory mock claims collection
-export let mockClaims = [
-  {
-    claim_id: 1001,
-    found_item_id: 1, // Set of 3 Bike Keys
-    claimant_user_id: 1,
-    claimant_name: "Kanakachala A",
-    status: CLAIM_STATUS.PENDING,
-    verification_details:
-      "The set contains 3 keys on an NIE metallic ring. One key is a Hero Splendor bike key with a tiny scratch near the plastic top, and another is a Godrej small padlock key.",
-    lost_date: "2026-09-13",
-    lost_location: "Mechanical Block — Two Wheeler Parking",
-    claimant_answer: "Hero Splendor key with blue ring",
-    proof_image_url: null,
-    created_at: "2026-09-14 11:20:00",
-    reviewed_at: null,
-    handover_instructions: null,
-    rejection_reason: null,
-  },
-  {
-    claim_id: 1002,
-    found_item_id: 2, // HP Scientific Calculator
-    claimant_user_id: 1,
-    claimant_name: "Kanakachala A",
-    status: CLAIM_STATUS.VERIFIED,
-    verification_details:
-      "Has initials 'KA' written in silver permanent marker on the underside of the sliding case. The battery latch on the back has a slight scratch.",
-    lost_date: "2026-09-11",
-    lost_location: "Dr. S. Radhakrishnan Block — Room 204",
-    claimant_answer: "KA in silver marker inside cover",
-    proof_image_url: null,
-    created_at: "2026-09-12 15:40:00",
-    reviewed_at: "2026-09-13 10:15:00",
-    handover_instructions:
-      "Please collect your item from South Campus Security Office during working hours (9:00 AM – 5:00 PM). Carry your physical NIE Student ID Card for verification.",
-    rejection_reason: null,
-  },
-  {
-    claim_id: 1003,
-    found_item_id: 3, // Black Leather Bi-fold Wallet
-    claimant_user_id: 1,
-    claimant_name: "Kanakachala A",
-    status: CLAIM_STATUS.REJECTED,
-    verification_details:
-      "Black leather wallet with no ID cards and 100 rupees cash.",
-    lost_date: "2026-09-09",
-    lost_location: "College Canteen",
-    claimant_answer: "No specific card",
-    proof_image_url: null,
-    created_at: "2026-09-10 09:30:00",
-    reviewed_at: "2026-09-11 14:00:00",
-    handover_instructions: null,
-    rejection_reason:
-      "The found wallet contains institutional cards and membership IDs under a different student name. Verification proof did not match.",
-  },
-];
+export let mockClaims = [];
 
 // Optional challenge question prompts (NEVER stores or returns expected_answer)
 const VERIFICATION_CHALLENGES = {

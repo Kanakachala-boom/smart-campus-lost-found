@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowLeft,
   ShieldAlert,
   ShieldCheck,
   FileText,
@@ -191,6 +192,23 @@ export default function AdminDashboard() {
   return (
     <AppLayout>
       <div className="admin-page">
+        <div style={{ marginBottom: "var(--space-3)" }}>
+          <Link
+            to="/dashboard"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "var(--text-sm)",
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
         {/* Header */}
       <div className="admin-header">
         <div>
