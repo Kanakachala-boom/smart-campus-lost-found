@@ -19,9 +19,9 @@ This document provides a comprehensive inventory of all configuration variables 
 | `DB_NAME` | Yes | `campus_lost_found` | `campus_lost_found` | Name of the active database instance. |
 | `DB_POOL_SIZE` | No | `10` | `10` to `20` | Base number of persistent connections in the SQLAlchemy connection pool. |
 | `DB_MAX_OVERFLOW` | No | `20` | `10` to `30` | Maximum surge connections allowed above `DB_POOL_SIZE` under traffic spikes. |
-| `JWT_SECRET_KEY` | Yes | *None* | `64-character-hex-string` | Secret key used to sign and verify HMAC-SHA256 access tokens. |
+| `JWT_SECRET` (or `JWT_SECRET_KEY`) | Yes | *None* | `64-character-hex-string` | Secret key (min 32 chars) used to sign and verify HMAC-SHA256 access tokens. |
 | `JWT_ALGORITHM` | No | `HS256` | `HS256` | Cryptographic algorithm for JWT generation. |
-| `JWT_EXPIRE_MINUTES` | No | `60` | `15` to `120` | Token validity lifetime in minutes before session re-authentication. |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` (or `JWT_EXPIRE_MINUTES`) | No | `1440` | `60` to `1440` | Token validity lifetime in minutes before session re-authentication. |
 | `CORS_ORIGINS` | Yes | `http://localhost:5173` | Comma-separated URLs | Whitelist of frontend origins permitted to make cross-origin requests. |
 | `SMTP_HOST` | No | `smtp.gmail.com` | `smtp.gmail.com` | Hostname of the outgoing SMTP relay server. |
 | `SMTP_PORT` | No | `587` | `587` (TLS) or `465` (SSL) | Port used for secure SMTP communication. |
@@ -29,7 +29,9 @@ This document provides a comprehensive inventory of all configuration variables 
 | `SMTP_PASSWORD` | No | *None* | `<app-password>` | App-specific password or API token for SMTP authentication. |
 | `SMTP_FROM_EMAIL` | No | *None* | `lostfound@nie.ac.in` | Sender email address displayed in institutional notification emails. |
 | `UPLOAD_DIR` | No | `uploads` | `/var/data/uploads` | Path to persistent storage directory for user-uploaded item photos. |
-| `TESTING` | No | `false` | `true`, `false` | When `true`, switches to SQLite test database and disables rate limiters. |
+| `TESTING` | No | `false` | `true`, `false` | When `true` in non-production mode, switches to SQLite test database and disables rate limiters. In production mode (`ENVIRONMENT=production`), rate limiting cannot be bypassed. |
+| `TRUST_PROXY_HEADERS` | No | `true` | `true`, `false` | When `true`, securely extracts client IP from trusted reverse proxy forwarding headers (Cloudflare CF-Connecting-IP, X-Real-IP, X-Forwarded-For). |
+| `TRUSTED_PROXIES` | No | *Loopback & RFC 1918* | `10.0.0.1,172.20.0.5` | Optional comma-separated list of upstream reverse proxy IPs permitted to forward client headers. |
 
 ---
 

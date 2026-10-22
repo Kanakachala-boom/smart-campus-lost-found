@@ -170,8 +170,6 @@ export function AuthProvider({ children }) {
     return authService.resetPassword(params);
   }, []);
 
-  const isAdmin = user?.role === ROLES.ADMIN;
-
   const value = useMemo(
     () => ({
       user,

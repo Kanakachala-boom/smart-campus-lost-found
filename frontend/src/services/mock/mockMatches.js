@@ -6,7 +6,6 @@
  */
 
 import { mockResponse, mockError } from "./mockClient";
-import { MATCH_STATUS } from "../../utils/constants";
 import { mockLostItems, mockFoundItems } from "./mockItems";
 
 export let mockMatches = [];

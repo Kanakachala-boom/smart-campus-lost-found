@@ -38,7 +38,6 @@ export const ENDPOINTS = {
   RECONCILE_MATCHES: "/api/matches/reconcile",
 
   // Private messages
-  CLAIM_MESSAGES: (claimId) => `/claims/${claimId}/messages`,
   MESSAGES: "/messages",
   CONVERSATIONS: "/messages/conversations",
   CONVERSATION: (userId) => `/messages/conversation/${userId}`,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Lock, MessageSquare, ShieldAlert, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Lock, MessageSquare, XCircle } from "lucide-react";
 import AppLayout from "../../components/layout/AppLayout";
 import ClaimStatusCard from "../../components/claims/ClaimStatusCard";
 import Button from "../../components/common/Button";
@@ -26,7 +26,7 @@ export function ClaimDetail() {
   const [handoverNote, setHandoverNote] = useState(
     "Please visit campus security / admin block with your NIE ID card for item verification and handover."
   );
-  const [rejectNote, setRejectNote] = useState(
+  const [rejectNote] = useState(
     "Verification marks and description provided did not sufficiently match the recovered item."
   );
 

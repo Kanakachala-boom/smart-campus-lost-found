@@ -22,8 +22,6 @@ import {
   Edit3,
   CheckCircle,
   RefreshCw,
-  AlertTriangle,
-  X,
   Send,
 } from "lucide-react";
 import Button from "../../components/common/Button";
@@ -81,7 +79,7 @@ export function ItemDetail() {
 
   // Private In-Report Conversation states (Found items)
   const [chatConversation, setChatConversation] = useState(null);
-  const [chatLoading, setChatLoading] = useState(false);
+  const [_chatLoading, setChatLoading] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [selectedClaimId, setSelectedClaimId] = useState(null);

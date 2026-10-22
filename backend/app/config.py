@@ -44,9 +44,31 @@ else:
     )
 
 # JWT / Authentication Settings
-JWT_SECRET: str = os.getenv("JWT_SECRET", "nie_smart_campus_lost_and_found_jwt_secret_dev_key_2026")
+INSECURE_JWT_SECRETS = {
+    "nie_smart_campus_lost_and_found_jwt_secret_dev_key_2026",
+    "please_set_a_secure_production_secret_32chars",
+    "replace_with_a_secure_random_secret_key_minimum_32_characters",
+    "your_secure_jwt_secret_key_minimum_32_characters",
+    "ci-secret-key-for-automated-tests-32chars!",
+}
+
+raw_jwt_secret = (os.getenv("JWT_SECRET") or os.getenv("JWT_SECRET_KEY") or "").strip()
+if ENVIRONMENT == "production":
+    if not raw_jwt_secret or raw_jwt_secret in INSECURE_JWT_SECRETS:
+        raise RuntimeError(
+            "CRITICAL SECURITY CONFIGURATION ERROR: A strong, unique JWT_SECRET (min 32 characters) "
+            "must be explicitly set in production mode. Refusing to start with missing, default, or placeholder secret."
+        )
+    if len(raw_jwt_secret) < 32:
+        raise RuntimeError(
+            "CRITICAL SECURITY CONFIGURATION ERROR: JWT_SECRET must be at least 32 characters long in production mode."
+        )
+
+JWT_SECRET: str = raw_jwt_secret or "nie_smart_campus_lost_and_found_jwt_secret_dev_key_2026"
 JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or os.getenv("JWT_EXPIRE_MINUTES", "1440")
+)
 
 # File Upload Settings
 UPLOAD_DIR: Path = BASE_DIR / os.getenv("UPLOAD_DIR", "app/uploads")
