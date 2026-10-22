@@ -73,7 +73,10 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment (`.env`)
-Create `backend/.env` from template:
+```powershell
+Copy-Item .env.example .env
+```
+Ensure your database credentials match in `.env`:
 ```ini
 DB_HOST=localhost
 DB_PORT=3306

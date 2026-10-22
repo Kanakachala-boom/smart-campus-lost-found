@@ -209,6 +209,10 @@ python -m venv venv
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# Create your local environment file:
+Copy-Item .env.example .env
+# Edit .env and configure your MySQL password (DB_PASSWORD=...)
+
 # Start the FastAPI server:
 python -m uvicorn app.main:app --reload --port 8000
 ```
@@ -228,6 +232,10 @@ cd "frontend"
 
 # Install Node dependencies:
 npm install
+
+# Create your frontend environment file:
+Copy-Item .env.example .env
+# (VITE_API_BASE_URL=http://localhost:8000 and VITE_USE_MOCK=false are already configured)
 
 # Start the Vite development server:
 npm run dev

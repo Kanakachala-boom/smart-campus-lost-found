@@ -8,12 +8,14 @@ hashing and institutional domain verification.
 
 Usage:
     python create_admin.py
-    (prompts interactively for Name, Staff ID, Institutional Email, and Password)
+    (prompts interactively for Name, Staff ID, Institutional Email, and hidden Password)
 
-Or with environment variables / non-interactive flags:
-    python create_admin.py --name "System Admin" --staff-id "NIE-STAFF-ADMIN" --email "admin@nie.ac.in" --password "SecureAdminPassword"
+Or with arguments for non-interactive automation (password supplied via environment variable):
+    $env:ADMIN_PASSWORD="SecurePassword123"
+    python create_admin.py --name "System Admin" --staff-id "NIE-STAFF-ADMIN" --email "admin@nie.ac.in"
 """
 
+import os
 import sys
 import argparse
 import getpass
@@ -77,14 +79,22 @@ def main():
     parser.add_argument("--name", type=str, help="Full Name of the Administrator")
     parser.add_argument("--staff-id", type=str, help="Official Staff / Employee ID")
     parser.add_argument("--email", type=str, help="Official Campus Email (must end with @nie.ac.in)")
-    parser.add_argument("--password", type=str, help="Secure Password (minimum 8 characters)")
+    parser.add_argument("--password", type=str, default=None, help=argparse.SUPPRESS)  # Deprecated for security
 
     args = parser.parse_args()
+
+    # Reject plaintext command-line passwords to prevent exposure in shell history and process tables
+    if args.password:
+        print("Security Warning: Supplying passwords via command-line arguments exposes credentials in process listings and shell history.")
+        print("Please enter the password via the secure interactive prompt, or set the ADMIN_PASSWORD environment variable for automation.")
+        sys.exit(1)
 
     name = args.name
     staff_id = args.staff_id
     email = args.email
-    password = args.password
+
+    # Check environment variable for automated non-interactive deployment
+    password = os.environ.get("ADMIN_PASSWORD")
 
     # Interactive prompt if parameters are missing
     if not email or not password:
