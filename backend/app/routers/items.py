@@ -30,6 +30,15 @@ router = APIRouter(prefix="/api", tags=["Items"])
 # Ensure uploads directory exists
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
+# Image magic byte signatures for content validation
+IMAGE_MAGIC_BYTES = {
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".gif": (b"GIF87a", b"GIF89a"),
+    ".webp": (b"RIFF",),
+}
+
 async def process_image_upload(file: Optional[UploadFile]) -> Optional[str]:
     """Validates and securely stores an uploaded image file."""
     if not file or not file.filename:
@@ -50,6 +59,18 @@ async def process_image_upload(file: Optional[UploadFile]) -> Optional[str]:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Image size exceeds the maximum allowed limit of {MAX_UPLOAD_SIZE_MB}MB.",
         )
+
+    # Validate image magic bytes to reject disguised non-image files
+    if ext in IMAGE_MAGIC_BYTES:
+        signatures = IMAGE_MAGIC_BYTES[ext]
+        matches_sig = any(content.startswith(sig) for sig in signatures)
+        if ext == ".webp" and matches_sig:
+            matches_sig = content[8:12] == b"WEBP"
+        if not matches_sig:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Uploaded file content does not match a valid {ext.lstrip('.').upper()} image signature.",
+            )
 
     safe_filename = f"{uuid.uuid4().hex}{ext}"
     target_path = UPLOAD_DIR / safe_filename

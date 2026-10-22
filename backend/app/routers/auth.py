@@ -42,8 +42,8 @@ def register_user(payload: UserRegisterRequest, db: Session = Depends(get_db)):
             detail="An account is already registered with this institutional email address.",
         )
 
-    # Determine initial role: if explicitly configured or email is admin
-    role = "ADMIN" if "admin@nie.ac.in" in email_clean else "STUDENT"
+    # Determine initial role: only exact official admin address or create_admin.py grants admin privileges
+    role = "ADMIN" if email_clean == "admin@nie.ac.in" else "STUDENT"
 
     new_user = User(
         name=payload.name.strip(),

@@ -5,8 +5,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
-from app.config import CORS_ORIGINS, UPLOAD_DIR
+from app.config import CORS_ORIGINS, UPLOAD_DIR, ENABLE_DOCS
 from app.database import init_db, check_db_connection
+from app.middleware.security import SecurityHeadersMiddleware, RateLimitMiddleware
 from app.routers import (
     auth,
     items,
@@ -89,9 +90,13 @@ app = FastAPI(
     version="1.0.0",
     description="Centralized REST API for The National Institute of Engineering (NIE), Mysuru.",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if ENABLE_DOCS else None,
+    redoc_url="/redoc" if ENABLE_DOCS else None,
 )
+
+# Configure Security and Rate Limiting Middlewares
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
 
 # Configure CORS
 app.add_middleware(
@@ -184,13 +189,26 @@ def health_check():
         },
     }
 
+@app.get("/api/health/ready", tags=["Health"])
+@app.get("/ready", tags=["Health"])
+def readiness_check():
+    """Readiness probe endpoint for container orchestrators and load balancers."""
+    db_connected, _ = check_db_connection()
+    if not db_connected:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "not_ready", "database": "disconnected", "detail": "Database connection is unavailable."},
+        )
+    return {"status": "ready", "database": "connected"}
+
 @app.get("/", tags=["Root"])
 def root():
     return {
         "message": "Welcome to Smart Campus Lost & Found Management System API",
         "institution": "The National Institute of Engineering (NIE), Mysuru",
-        "docs_url": "/docs",
+        "docs_url": "/docs" if ENABLE_DOCS else None,
         "health_url": "/api/health",
+        "ready_url": "/api/health/ready",
     }
 
 # Register API Routers

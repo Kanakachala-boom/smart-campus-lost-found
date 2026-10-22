@@ -11,8 +11,11 @@ else:
     load_dotenv()
 
 # Server Settings
+ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development").lower()
 HOST: str = os.getenv("HOST", "0.0.0.0")
 PORT: int = int(os.getenv("PORT", "8000"))
+ENABLE_DOCS: bool = os.getenv("ENABLE_DOCS", "true").lower() in ("true", "1", "yes")
+
 CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173")
 CORS_ORIGINS: list[str] = [origin.strip() for origin in CORS_ORIGINS_RAW.split(",") if origin.strip()]
 
@@ -24,6 +27,8 @@ DB_PORT: int = int(os.getenv("DB_PORT", "3306"))
 DB_NAME: str = os.getenv("DB_NAME", "campus_lost_found")
 DB_USER: str = os.getenv("DB_USER", "root")
 DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "10"))
+DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "20"))
 
 raw_database_url = os.getenv("DATABASE_URL")
 if raw_database_url:

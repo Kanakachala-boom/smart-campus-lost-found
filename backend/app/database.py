@@ -2,24 +2,30 @@ import logging
 from typing import Generator, Tuple
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from app.config import DATABASE_URL, DB_PASSWORD
+from app.config import DATABASE_URL, DB_PASSWORD, DB_POOL_SIZE, DB_MAX_OVERFLOW
 
 logger = logging.getLogger("smart_campus.database")
 
 # Create engine with resilient pooling parameters
 connect_args = {}
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "pool_recycle": 3600,
+    "echo": False,
+}
+
 db_url_str = str(DATABASE_URL)
 if "sqlite" in db_url_str:
     connect_args["check_same_thread"] = False
 elif "mysql" in db_url_str:
     connect_args["connect_timeout"] = 5
+    engine_kwargs["pool_size"] = DB_POOL_SIZE
+    engine_kwargs["max_overflow"] = DB_MAX_OVERFLOW
 
 engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
-    pool_pre_ping=True,
-    pool_recycle=3600,
-    echo=False
+    **engine_kwargs
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

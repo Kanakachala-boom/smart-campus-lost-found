@@ -50,5 +50,7 @@ Thumbs.db
 
 # Database backups and uploaded photos
 database/backup_*
+database/backups/
+database/backups/*
 backend/app/uploads/*
 !backend/app/uploads/.gitkeep
