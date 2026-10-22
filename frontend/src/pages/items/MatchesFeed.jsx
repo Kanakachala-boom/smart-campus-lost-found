@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowLeft,
   Sparkles,
   ArrowRight,
   ShieldCheck,
@@ -8,6 +9,7 @@ import {
   XCircle,
   ExternalLink,
   Layers,
+  RefreshCw,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import { matchesService } from "../../services";
@@ -26,11 +28,17 @@ export default function MatchesFeed() {
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [isReconciling, setIsReconciling] = useState(false);
+  const [reconcileMessage, setReconcileMessage] = useState(null);
 
   const fetchMatches = useCallback(async () => {
+    if (!user?.user_id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const response = await matchesService.getMyMatches(user?.user_id || 1);
+      const response = await matchesService.getMyMatches(user.user_id);
       const data = response?.data || response || [];
       setMatches(data);
       setError(null);
@@ -41,11 +49,30 @@ export default function MatchesFeed() {
     }
   }, [user]);
 
+  const handleReconcile = async () => {
+    setIsReconciling(true);
+    setReconcileMessage(null);
+    try {
+      const res = await matchesService.reconcileMatches();
+      const count = res?.reconciled_count ?? res?.data?.reconciled_count ?? 0;
+      setReconcileMessage(`Matching engine rescan completed. ${count} item match(es) processed.`);
+      await fetchMatches();
+    } catch (err) {
+      setReconcileMessage(err?.message || "Reconciliation failed.");
+    } finally {
+      setIsReconciling(false);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (!user?.user_id) {
+        setLoading(false);
+        return;
+      }
       try {
-        const response = await matchesService.getMyMatches(user?.user_id || 1);
+        const response = await matchesService.getMyMatches(user.user_id);
         if (!cancelled) {
           const data = response?.data || response || [];
           setMatches(data);
@@ -89,15 +116,50 @@ export default function MatchesFeed() {
   return (
     <AppLayout>
       <div className="matches-feed-page">
-      <div className="matches-feed-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <Sparkles size={24} style={{ color: "var(--color-primary)" }} />
-          <h1 className="matches-feed-title">Potential Item Matches</h1>
+        <div style={{ marginBottom: "var(--space-3)" }}>
+          <Link
+            to="/dashboard"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "var(--text-sm)",
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              fontWeight: 500,
+            }}
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>Back to Dashboard</span>
+          </Link>
         </div>
-        <p className="matches-feed-sub">
-          Automated correlations between your reported items and matching campus reports.
-        </p>
-      </div>
+        <div className="matches-feed-header">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", width: "100%" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Sparkles size={24} style={{ color: "var(--color-primary)" }} />
+                <h1 className="matches-feed-title">Potential Item Matches</h1>
+              </div>
+              <p className="matches-feed-sub">
+                Automated correlations between your reported items and matching campus reports.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={RefreshCw}
+              isLoading={isReconciling}
+              onClick={handleReconcile}
+            >
+              Re-scan All Reports
+            </Button>
+          </div>
+          {reconcileMessage && (
+            <div style={{ marginTop: "10px", padding: "8px 12px", backgroundColor: "var(--color-primary-soft, rgba(59, 130, 246, 0.1))", color: "var(--color-primary, #3b82f6)", borderRadius: "var(--radius-md)", fontSize: "var(--text-xs)", width: "100%" }}>
+              {reconcileMessage}
+            </div>
+          )}
+        </div>
 
       <div className="my-reports-tabs" style={{ marginBottom: "var(--space-6)" }}>
         {["ALL", MATCH_STATUS.PENDING, MATCH_STATUS.ACCEPTED, MATCH_STATUS.REJECTED].map(

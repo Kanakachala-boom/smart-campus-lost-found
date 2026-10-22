@@ -154,6 +154,37 @@ export function ResetPassword() {
                   </Link>
                 </div>
               </div>
+            ) : !token ? (
+              <div className="auth-recovery-missing-token" role="alert">
+                <div className="auth-alert auth-alert--error">
+                  <AlertCircle
+                    size={20}
+                    className="auth-alert__icon"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <h4 style={{ margin: "0 0 4px 0", fontWeight: 600 }}>Missing Password Reset Link</h4>
+                    <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.5" }}>
+                      A secure password reset link from your registered NIE college email is required to set a new password. Please open the link sent to your inbox, or request a new one.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "20px" }}>
+                  <Link to="/forgot-password">
+                    <Button variant="primary" size="lg" fullWidth>
+                      Request New Reset Link
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="auth-card__footer">
+                  <Link to="/login" className="auth-back-link">
+                    <ArrowLeft size={16} aria-hidden="true" />
+                    <span>Back to Login</span>
+                  </Link>
+                </div>
+              </div>
             ) : (
               <>
                 {serverError && (

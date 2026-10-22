@@ -112,9 +112,53 @@ export async function createFoundItem(payload) {
   return api.upload(ENDPOINTS.FOUND_ITEMS, formData);
 }
 
+/**
+ * Updates an item's details (owner or admin).
+ *
+ * @param {string} type 'lost' | 'found'
+ * @param {string|number} id
+ * @param {Object} data
+ */
+export async function updateItem(type, id, data) {
+  if (USE_MOCK) {
+    return { ...data, id };
+  }
+  return api.put(ENDPOINTS.ITEM_DETAIL(type, id), data);
+}
+
+/**
+ * Updates an item's status (owner or admin).
+ *
+ * @param {string} type 'lost' | 'found'
+ * @param {string|number} id
+ * @param {string} status
+ */
+export async function updateItemStatus(type, id, status) {
+  if (USE_MOCK) {
+    return { status, id };
+  }
+  return api.patch(ENDPOINTS.ITEM_STATUS(type, id), { status });
+}
+
+/**
+ * Deletes or archives an item (owner or admin).
+ *
+ * @param {string} type 'lost' | 'found'
+ * @param {string|number} id
+ */
+export async function deleteItem(type, id) {
+  if (USE_MOCK) {
+    return { success: true };
+  }
+  return api.delete(ENDPOINTS.ITEM_DETAIL(type, id));
+}
+
 export default {
   listItems,
   getItem,
   createLostItem,
   createFoundItem,
+  updateItem,
+  updateItemStatus,
+  deleteItem,
 };

@@ -1,9 +1,11 @@
 /**
- * Service for Claim-Based Messages / Private Chat.
+ * Service for Claim-Based Messages / Private Chat and Found-Item Conversation.
  *
- * PROPOSED FASTAPI INTEGRATION:
+ * FASTAPI INTEGRATION:
  * - GET  /api/claims/{claim_id}/messages
  * - POST /api/claims/{claim_id}/messages
+ * - GET  /api/found-items/{item_id}/conversation
+ * - POST /api/found-items/{item_id}/conversation/messages
  */
 
 import api, { USE_MOCK } from "./api";
@@ -35,7 +37,34 @@ export async function sendClaimMessage(claimId, text, user) {
   return api.post(ENDPOINTS.CLAIM_MESSAGES(claimId), { text });
 }
 
+export async function getFoundItemConversation(foundItemId, claimId = null) {
+  if (USE_MOCK) {
+    return {
+      can_chat: false,
+      messages: [],
+    };
+  }
+
+  const params = claimId ? { claim_id: claimId } : undefined;
+  return api.get(ENDPOINTS.FOUND_ITEM_CONVERSATION(foundItemId), { params });
+}
+
+export async function sendFoundItemMessage(foundItemId, text, claimId = null) {
+  if (USE_MOCK) {
+    return {
+      message_id: Date.now(),
+      text,
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  const params = claimId ? { claim_id: claimId } : undefined;
+  return api.post(ENDPOINTS.FOUND_ITEM_MESSAGES(foundItemId), { text }, { params });
+}
+
 export default {
   getClaimMessages,
   sendClaimMessage,
+  getFoundItemConversation,
+  sendFoundItemMessage,
 };

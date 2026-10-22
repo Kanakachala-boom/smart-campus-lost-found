@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import StatusBadge from "../common/StatusBadge";
 import { ITEM_STATUS_META } from "../../utils/statusMaps";
+import { getFullImageUrl } from "../../utils/imageUrl";
 import "./ItemCard.css";
 
 const CATEGORY_ICONS = {
@@ -46,7 +47,7 @@ export function ItemCard({ item }) {
       <div className="item-card__media">
         {item.image_url ? (
           <img
-            src={item.image_url}
+            src={getFullImageUrl(item.image_url)}
             alt={item.item_name}
             className="item-card__image"
             loading="lazy"

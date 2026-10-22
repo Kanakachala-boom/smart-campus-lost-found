@@ -7,8 +7,9 @@
  */
 
 export const ENDPOINTS = {
-  /* ---- Proposed Authentication ---- */
+  /* ---- Authentication ---- */
   LOGIN: "/api/auth/login",
+  REGISTER: "/api/auth/register",
   FORGOT_PASSWORD: "/api/auth/forgot-password",
   RESET_PASSWORD: "/api/auth/reset-password",
   ME: "/api/auth/me",
@@ -20,10 +21,14 @@ export const ENDPOINTS = {
   ITEM_DETAIL: (type, id) => `/api/${type}-items/${id}`,
   MY_REPORTS: "/api/users/me/reports",
 
+  /* ---- Item Status and Management ---- */
+  ITEM_STATUS: (type, id) => `/api/${type}-items/${id}/status`,
+
   /* ---- Proposed Claims & Ownership Verification (Stage 5) ---- */
   CLAIMS: "/api/claims",
   MY_CLAIMS: "/api/claims/my-claims",
   CLAIM_DETAIL: (id) => `/api/claims/${id}`,
+  FOUND_ITEM_CLAIMS: (foundItemId) => `/api/found-items/${foundItemId}/claims`,
   VERIFICATION_CHALLENGE: (foundItemId) => `/api/found-items/${foundItemId}/verification-challenge`,
   VERIFY_CLAIM: (claimId) => `/api/claims/${claimId}/verify`,
 
@@ -32,6 +37,7 @@ export const ENDPOINTS = {
   LOST_MATCHES: (id) => `/api/lost-items/${id}/matches`,
   FOUND_MATCHES: (id) => `/api/found-items/${id}/matches`,
   UPDATE_MATCH_STATUS: (id) => `/api/matches/${id}/status`,
+  RECONCILE_MATCHES: "/api/matches/reconcile",
 
   /* ---- Proposed Targeted Notifications ---- */
   NOTIFICATIONS: "/api/notifications",
@@ -40,6 +46,8 @@ export const ENDPOINTS = {
 
   /* ---- Proposed In-App Claim-Based Messages ---- */
   CLAIM_MESSAGES: (claimId) => `/api/claims/${claimId}/messages`,
+  FOUND_ITEM_CONVERSATION: (foundItemId) => `/api/found-items/${foundItemId}/conversation`,
+  FOUND_ITEM_MESSAGES: (foundItemId) => `/api/found-items/${foundItemId}/conversation/messages`,
 
   /* ---- Proposed Dashboard Metrics ---- */
   DASHBOARD: "/api/dashboard",

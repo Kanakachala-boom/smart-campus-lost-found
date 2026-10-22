@@ -34,7 +34,7 @@ export function Navbar() {
 
   const isAdmin = user?.role === "ADMIN";
 
-  // Load unread count and latest notifications
+  // Load unread count and latest notifications with dynamic polling
   useEffect(() => {
     let cancelled = false;
 
@@ -53,6 +53,11 @@ export function Navbar() {
 
     if (user) {
       fetchNotifications();
+      const interval = setInterval(fetchNotifications, 6000);
+      return () => {
+        cancelled = true;
+        clearInterval(interval);
+      };
     }
 
     return () => {
@@ -82,9 +87,9 @@ export function Navbar() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -250,17 +255,18 @@ export function Navbar() {
           )}
 
           {/* Logout button desktop */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            icon={LogOut}
-            aria-label="Log out of NIE Lost and Found"
-            style={{ display: "none" }}
-            className="app-navbar__desktop-logout"
-          >
-            Logout
-          </Button>
+          {user && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              icon={LogOut}
+              aria-label="Log out of NIE Lost and Found"
+              className="app-navbar__desktop-logout"
+            >
+              Logout
+            </Button>
+          )}
 
           {/* Mobile Hamburger */}
           <button

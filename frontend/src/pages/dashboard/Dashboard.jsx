@@ -33,7 +33,7 @@ export default function Dashboard() {
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await dashboardService.getDashboardData(user?.user_id || 1);
+      const res = await dashboardService.getDashboardData(user?.user_id);
       setData(res);
       setError(null);
     } catch (err) {
@@ -47,7 +47,7 @@ export default function Dashboard() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await dashboardService.getDashboardData(user?.user_id || 1);
+        const res = await dashboardService.getDashboardData(user?.user_id);
         if (!cancelled) {
           setData(res);
           setError(null);

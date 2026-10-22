@@ -337,6 +337,19 @@
   color: var(--color-warning);
 }
 
+/* Desktop Logout Button */
+.app-navbar__desktop-logout {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .app-navbar__desktop-logout {
+    display: inline-flex !important;
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-3);
+  }
+}
+
 /* Mobile Hamburger Button */
 .app-navbar__hamburger {
   display: flex;

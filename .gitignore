@@ -20,6 +20,8 @@ coverage
 
 # Dependency directories
 node_modules/
+dist/
+build/
 jspm_packages/
 __pycache__/
 *.py[cod]
@@ -27,6 +29,7 @@ __pycache__/
 .venv/
 venv/
 env/
+.pytest_cache/
 
 # Environment variables
 .env
@@ -44,3 +47,8 @@ Thumbs.db
 .vscode/
 *.sublime-workspace
 *.sublime-project
+
+# Database backups and uploaded photos
+database/backup_*
+backend/app/uploads/*
+!backend/app/uploads/.gitkeep

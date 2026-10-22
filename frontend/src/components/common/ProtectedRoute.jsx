@@ -9,10 +9,18 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-import { LoadingState } from "./StateViews";
+import { ErrorState, LoadingState } from "./StateViews";
+import Button from "./Button";
 
 export function ProtectedRoute({ children }) {
-  const { isAuthenticated, isInitialising } = useAuth();
+  const {
+    isAuthenticated,
+    isInitialising,
+    sessionError,
+    retrySession,
+    clearSession,
+    token,
+  } = useAuth();
   const location = useLocation();
 
   if (isInitialising) {
@@ -26,6 +34,33 @@ export function ProtectedRoute({ children }) {
         }}
       >
         <LoadingState message="Checking campus session…" />
+      </div>
+    );
+  }
+
+  if (sessionError) {
+    return (
+      <div
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "var(--spacing-lg, 1.5rem)",
+          gap: "1.25rem",
+        }}
+      >
+        <ErrorState
+          title="Campus Server Unavailable"
+          message={sessionError}
+          onRetry={retrySession}
+        />
+        {token && (
+          <Button variant="ghost" size="sm" onClick={clearSession}>
+            Clear saved session & go to Login
+          </Button>
+        )}
       </div>
     );
   }

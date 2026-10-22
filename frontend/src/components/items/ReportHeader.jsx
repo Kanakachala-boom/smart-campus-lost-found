@@ -14,9 +14,9 @@ export function ReportHeader({ activeMode = "lost" }) {
     <header className="report-header">
       <div className="report-header__topbar">
         <div className="report-header__brand-group">
-          <Link to="/" className="report-header__back-link" aria-label="Return to Home">
+          <Link to="/dashboard" className="report-header__back-link" aria-label="Return to Dashboard">
             <ArrowLeft size={16} aria-hidden="true" />
-            <span>Home</span>
+            <span>Dashboard</span>
           </Link>
           <span className="report-header__divider" aria-hidden="true">/</span>
           <div className="report-header__institution">

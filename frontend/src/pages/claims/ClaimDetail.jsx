@@ -1,21 +1,34 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Lock, MessageSquare } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Lock, MessageSquare, ShieldAlert, XCircle } from "lucide-react";
 import AppLayout from "../../components/layout/AppLayout";
 import ClaimStatusCard from "../../components/claims/ClaimStatusCard";
 import Button from "../../components/common/Button";
 import Card from "../../components/common/Card";
 import { LoadingState, ErrorState } from "../../components/common/StateViews";
+import useAuth from "../../hooks/useAuth";
 import claimsService from "../../services/claimsService";
+import { getFullImageUrl } from "../../utils/imageUrl";
 import "./ClaimDetail.css";
 
 export function ClaimDetail() {
   const { claimId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [claim, setClaim] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Review states
+  const [actionError, setActionError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [handoverNote, setHandoverNote] = useState(
+    "Please visit campus security / admin block with your NIE ID card for item verification and handover."
+  );
+  const [rejectNote, setRejectNote] = useState(
+    "Verification marks and description provided did not sufficiently match the recovered item."
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -44,6 +57,41 @@ export function ClaimDetail() {
       cancelled = true;
     };
   }, [claimId]);
+
+  const isFinder =
+    user &&
+    ((claim?.found_item && claim.found_item.user_id === user.user_id) ||
+      (claim?.item && claim.item.user_id === user.user_id));
+  const isAdmin = user && user.role === "ADMIN";
+  const canReview = (isFinder || isAdmin) && claim?.status === "PENDING";
+
+  const handleVerify = async () => {
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      const res = await claimsService.verifyClaim(claim.claim_id, handoverNote);
+      const updated = res?.data || res;
+      setClaim((prev) => ({ ...prev, ...updated, status: "VERIFIED" }));
+    } catch (err) {
+      setActionError(err.message || "Failed to approve claim.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      const res = await claimsService.rejectClaim(claim.claim_id, rejectNote);
+      const updated = res?.data || res;
+      setClaim((prev) => ({ ...prev, ...updated, status: "REJECTED" }));
+    } catch (err) {
+      setActionError(err.message || "Failed to reject claim.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -122,13 +170,69 @@ export function ClaimDetail() {
                 <div className="claim-evidence-field">
                   <span className="claim-evidence-label">Supporting Document / Prior Photo:</span>
                   <img
-                    src={claim.proof_image_url}
+                    src={getFullImageUrl(claim.proof_image_url)}
                     alt="Submitted proof document"
                     style={{ maxWidth: "320px", maxHeight: "200px", borderRadius: "var(--radius-md)", objectFit: "cover", marginTop: "8px" }}
                   />
                 </div>
               )}
             </div>
+
+            {/* Finder / Admin Verification Action Card */}
+            {canReview && (
+              <Card title="Review & Verify Claim" padded className="claim-review-action-card">
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <p style={{ margin: 0, fontSize: "var(--text-sm)", color: "var(--color-text-muted)" }}>
+                    As the finder or campus authority, verify whether the submitted evidence and identifying markings match the item in custody before releasing it.
+                  </p>
+
+                  {actionError && (
+                    <div style={{ padding: "10px", backgroundColor: "var(--color-danger-soft, rgba(239, 68, 68, 0.1))", color: "var(--color-danger, #ef4444)", borderRadius: "var(--radius-md)", fontSize: "var(--text-xs)" }}>
+                      {actionError}
+                    </div>
+                  )}
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "var(--text-xs)", fontWeight: 600, marginBottom: "6px" }}>
+                      Handover Instructions (Provided to Claimant upon Verification):
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={handoverNote}
+                      onChange={(e) => setHandoverNote(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--color-border)",
+                        backgroundColor: "var(--color-surface)",
+                        color: "var(--color-text)",
+                        fontSize: "var(--text-sm)",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                    <Button
+                      variant="primary"
+                      icon={CheckCircle2}
+                      isLoading={isSubmitting}
+                      onClick={handleVerify}
+                    >
+                      Verify & Approve Handover
+                    </Button>
+                    <Button
+                      variant="danger"
+                      icon={XCircle}
+                      isLoading={isSubmitting}
+                      onClick={handleReject}
+                    >
+                      Reject Claim
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
 
             {/* Target Found Item Context */}
             {claim.item && (

@@ -145,9 +145,9 @@ export function ItemsFeed() {
       <header className="items-feed-header">
         <div className="items-feed-header__topbar">
           <div className="items-feed-header__brand-group">
-            <Link to="/" className="items-feed-header__back-link" aria-label="Return to Home">
+            <Link to="/dashboard" className="items-feed-header__back-link" aria-label="Return to Dashboard">
               <ArrowLeft size={16} aria-hidden="true" />
-              <span>Home</span>
+              <span>Dashboard</span>
             </Link>
             <span className="items-feed-header__divider" aria-hidden="true">/</span>
             <div className="items-feed-header__institution">
@@ -210,20 +210,97 @@ export function ItemsFeed() {
           </div>
         ) : items.length === 0 ? (
           <div className="items-feed__state-wrapper">
-            <EmptyState
-              title="No items found"
-              message="No matching lost or found records correspond to your search or filters. Try clearing your filters or report an item."
-              icon={PackageSearch}
-              action={
-                <button
-                  type="button"
-                  className="btn btn--secondary btn--sm"
-                  onClick={handleResetFilters}
-                >
-                  Clear All Filters
-                </button>
+            {(() => {
+              const hasActiveFilters = Boolean(
+                searchParam ||
+                (categoryParam && categoryParam !== "ALL") ||
+                (locationParam && locationParam !== "ALL") ||
+                (statusParam && statusParam !== "ACTIVE")
+              );
+
+              if (hasActiveFilters) {
+                return (
+                  <EmptyState
+                    title="No items found"
+                    message="No matching records correspond to your search or filters. Try clearing your filters or report an item."
+                    icon={PackageSearch}
+                    action={
+                      <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={handleResetFilters}
+                      >
+                        Clear All Filters
+                      </button>
+                    }
+                  />
+                );
               }
-            />
+
+              if (typeParam === "lost") {
+                return (
+                  <EmptyState
+                    title="No lost items reported yet"
+                    message="There are currently no active lost-item reports in the campus registry."
+                    icon={PackageSearch}
+                    action={
+                      <Link
+                        to="/report/lost"
+                        className="btn btn--primary btn--sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+                      >
+                        <PlusCircle size={15} /> Report Lost Item
+                      </Link>
+                    }
+                  />
+                );
+              }
+
+              if (typeParam === "found") {
+                return (
+                  <EmptyState
+                    title="No found items reported yet"
+                    message="There are currently no active found-item reports in the campus registry."
+                    icon={PackageSearch}
+                    action={
+                      <Link
+                        to="/report/found"
+                        className="btn btn--primary btn--sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+                      >
+                        <PlusCircle size={15} /> Report Found Item
+                      </Link>
+                    }
+                  />
+                );
+              }
+
+              return (
+                <EmptyState
+                  title="No items reported yet"
+                  message="There are currently no lost or found reports in the campus registry."
+                  icon={PackageSearch}
+                  action={
+                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", flexWrap: "wrap" }}>
+                      <Link
+                        to="/report/lost"
+                        className="btn btn--primary btn--sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+                      >
+                        <PlusCircle size={15} /> Report Lost Item
+                      </Link>
+                      <Link
+                        to="/report/found"
+                        className="btn btn--secondary btn--sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+                      >
+                        <PlusCircle size={15} /> Report Found Item
+                      </Link>
+                    </div>
+                  }
+                />
+              );
+            })()}
           </div>
         ) : (
           <>
