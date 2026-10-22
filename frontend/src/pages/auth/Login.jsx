@@ -162,7 +162,7 @@ export function Login() {
                   className={`auth-input ${
                     errors.email ? "auth-input--error" : ""
                   }`}
-                  placeholder="e.g. 2024is_kanakachala_a@nie.ac.in"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.email)}

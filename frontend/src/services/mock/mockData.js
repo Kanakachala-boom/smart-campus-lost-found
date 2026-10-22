@@ -5,35 +5,7 @@
  * Passwords are never stored here.
  */
 
-export const mockUsers = [
-  {
-    user_id: 1,
-    name: "Kanakachala A",
-    email: "2024is_kanakachala_a@nie.ac.in",
-    phone: "9876543210",
-    role: "STUDENT",
-    is_active: true,
-    created_at: "2026-08-01 09:00:00",
-  },
-  {
-    user_id: 2,
-    name: "Ananya Rao",
-    email: "2024is_ananya_r@nie.ac.in",
-    phone: "9876543211",
-    role: "STUDENT",
-    is_active: true,
-    created_at: "2026-08-02 09:14:00",
-  },
-  {
-    user_id: 3,
-    name: "Prof. S. N. Murthy (Admin)",
-    email: "admin@nie.ac.in",
-    phone: "9876543212",
-    role: "ADMIN",
-    is_active: true,
-    created_at: "2026-08-01 08:30:00",
-  },
-];
+export const mockUsers = [];
 
 /**
  * Finds a mock user by email (case-insensitive).

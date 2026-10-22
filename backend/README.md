@@ -73,24 +73,29 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment (`.env`)
-Create or edit `backend/.env`:
+Create `backend/.env` from template:
 ```ini
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
-DB_NAME=smart_campus_db
-SECRET_KEY=nie-smart-campus-super-secret-jwt-key-2026-production
-ALGORITHM=HS256
+DB_NAME=campus_lost_found
+JWT_SECRET=your_secure_jwt_secret_key_minimum_32_characters
+JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-UPLOAD_DIR=uploads
-MAX_FILE_SIZE_MB=5
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+UPLOAD_DIR=app/uploads
+MAX_UPLOAD_SIZE_MB=5
 ```
 
-### 3. Run the Development Server
+### 3. Provision an Administrator Account
 ```powershell
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python create_admin.py
+```
+
+### 4. Run the Development Server
+```powershell
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---

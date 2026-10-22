@@ -9,8 +9,8 @@ export const NIE_EMAIL_DOMAIN = "@nie.ac.in";
  * NIE institutional domain (@nie.ac.in).
  *
  * Examples accepted:
- * - 2024is_kanakachala_a@nie.ac.in
- * - student@nie.ac.in
+ * - usn_student@nie.ac.in
+ * - staff@nie.ac.in
  *
  * Examples rejected:
  * - student@gmail.com

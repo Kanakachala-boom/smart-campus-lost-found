@@ -136,7 +136,7 @@ export function ForgotPassword() {
                       type="email"
                       autoComplete="email"
                       className={`auth-input ${error ? "auth-input--error" : ""}`}
-                      placeholder="e.g. 2024is_kanakachala_a@nie.ac.in"
+                      placeholder="Enter your registered email"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);

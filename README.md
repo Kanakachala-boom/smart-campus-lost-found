@@ -181,11 +181,7 @@ Initialize the database schema:
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS campus_lost_found CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 mysql -u root -p campus_lost_found < database/schema.sql
 ```
-
-*(Optional)* Populate realistic NIE campus seed data for testing:
-```powershell
-mysql -u root -p campus_lost_found < database/seed.sql
-```
+*Creates the complete relational database with all 10 normalized tables, foreign keys, and indexes. No fictional student identities or fake reports are inserted.*
 
 Verify tables in MySQL:
 ```powershell
@@ -241,15 +237,32 @@ npm run dev
 
 ---
 
-## 🔑 Test Accounts (From `seed.sql`)
+## 🔐 Real Account Usage & Administrator Provisioning
 
-All seeded development accounts share the password: **`Password@123`**
+The application operates exclusively on real user accounts and genuine campus lost/found reports.
 
-| Role | Name | College ID / USN | Email Address | Password |
-| :--- | :--- | :--- | :--- | :--- |
-| **Administrator** | Prof. S. N. Murthy | `NIE-STAFF-001` | `admin@nie.ac.in` | `Password@123` |
-| **Student (Owner)** | Kanakachala A | `4NI21IS045` | `2024is_kanakachala_a@nie.ac.in` | `Password@123` |
-| **Student (Finder)** | Ananya Rao | `4NI21IS012` | `2024is_ananya_r@nie.ac.in` | `Password@123` |
+### Student & Faculty Registration
+Students and faculty register directly via the portal at:
+```
+http://localhost:5173/register
+```
+- Requires a valid institutional email ending with `@nie.ac.in`.
+- Passwords are salted and hashed with `bcrypt` before storage in MySQL.
+- A fresh database starts empty; newly registered users populate the database naturally.
+
+### Administrator Provisioning
+Administrator privileges cannot be obtained via the public registration form. To provision an authorized campus administrator for a deployment, execute the provisioning CLI:
+```powershell
+cd backend
+.\venv\Scripts\python.exe create_admin.py
+```
+This utility prompts for:
+1. **Full Name** of the campus administrator
+2. **Staff / Employee ID**
+3. **Official Campus Email** (must end with `@nie.ac.in`)
+4. **Secure Password** (minimum 8 characters)
+
+The script securely hashes the password with bcrypt and establishes the user with `ADMIN` role in MySQL.
 
 ---
 

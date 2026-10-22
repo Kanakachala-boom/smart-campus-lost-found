@@ -41,23 +41,22 @@ From the project root:
 ```powershell
 mysql -u root -p < database/schema.sql
 ```
-*Creates the `campus_lost_found` database and all 10 required relational tables, foreign key constraints, indexes, and triggers.*
+*Creates the `campus_lost_found` database and all 10 required relational tables, foreign key constraints, indexes, and triggers. No sample accounts or demo reports are inserted.*
 
-### Step 2: (Optional) Populate Development Seed Data
-To populate verified development test accounts and realistic campus reports for testing:
+### Step 2: Provision an Authorized Campus Administrator
+To establish the initial administrator account securely with institutional domain validation and salted bcrypt password hashing:
 ```powershell
-mysql -u root -p < database/seed.sql
+cd backend
+.\venv\Scripts\python.exe create_admin.py
 ```
-
-#### Verified Test Accounts in `seed.sql`:
-All seeded accounts use password: `Password@123`
-- **Student A (Owner):** `2024is_kanakachala_a@nie.ac.in` (USN: `4NI21IS045`, Role: `STUDENT`)
-- **Student B (Finder):** `2024is_ananya_r@nie.ac.in` (USN: `4NI21IS012`, Role: `STUDENT`)
-- **Campus Security / Administrator:** `admin@nie.ac.in` (Staff ID: `NIE-STAFF-001`, Role: `ADMIN`)
+*Follow the interactive prompt to enter your official Administrator Full Name, Staff ID, Institutional Email (`@nie.ac.in`), and Secure Password.*
 
 ### Step 3: Verify Database Tables and Structure
 ```powershell
 mysql -u root -p -e "USE campus_lost_found; SHOW TABLES;"
 ```
 Expected output: 10 tables (`claims`, `found_items`, `lost_items`, `matches`, `messages`, `notifications`, `ownership_verifications`, `password_reset_tokens`, `reclaim_records`, `users`).
+
+### Step 4: Authentic Student Registration
+Students create their genuine accounts by clicking "Register" on the frontend portal (`http://localhost:5173/register`) with their valid `@nie.ac.in` institutional email. All data is written directly to MySQL.
 

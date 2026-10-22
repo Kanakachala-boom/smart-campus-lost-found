@@ -170,7 +170,7 @@ export function Register() {
                   type="text"
                   autoComplete="name"
                   className={`auth-input ${errors.name ? "auth-input--error" : ""}`}
-                  placeholder="e.g. Kanakachala A"
+                  placeholder="Enter your full name"
                   value={formData.name}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.name)}
@@ -188,7 +188,7 @@ export function Register() {
                   name="student_staff_id"
                   type="text"
                   className={`auth-input ${errors.student_staff_id ? "auth-input--error" : ""}`}
-                  placeholder="e.g. 4NI21IS045"
+                  placeholder="Enter your USN or Staff ID"
                   value={formData.student_staff_id}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.student_staff_id)}
@@ -207,7 +207,7 @@ export function Register() {
                   type="email"
                   autoComplete="email"
                   className={`auth-input ${errors.email ? "auth-input--error" : ""}`}
-                  placeholder="e.g. 2024is_kanakachala_a@nie.ac.in"
+                  placeholder="Enter your college email"
                   value={formData.email}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.email)}
