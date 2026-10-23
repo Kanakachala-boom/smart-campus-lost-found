@@ -16,22 +16,33 @@ export async function listItems(params = {}) {
   const { type = "all", ...filters } = params;
 
   if (type === "lost") {
-    return api.get(ENDPOINTS.LOST_ITEMS, { params: filters });
+    const res = await api.get(ENDPOINTS.LOST_ITEMS, { params: filters });
+    return res && Array.isArray(res.items) ? res : { items: Array.isArray(res) ? res : [], total: res?.total || 0, total_pages: res?.total_pages || 1 };
   }
 
   if (type === "found") {
-    return api.get(ENDPOINTS.FOUND_ITEMS, { params: filters });
+    const res = await api.get(ENDPOINTS.FOUND_ITEMS, { params: filters });
+    return res && Array.isArray(res.items) ? res : { items: Array.isArray(res) ? res : [], total: res?.total || 0, total_pages: res?.total_pages || 1 };
   }
 
-  const [lostItems, foundItems] = await Promise.all([
+  const [lostRes, foundRes] = await Promise.all([
     api.get(ENDPOINTS.LOST_ITEMS, { params: filters }),
     api.get(ENDPOINTS.FOUND_ITEMS, { params: filters }),
   ]);
 
-  return [
-    ...lostItems.map((item) => ({ ...item, item_type: "lost" })),
-    ...foundItems.map((item) => ({ ...item, item_type: "found" })),
+  const lostList = Array.isArray(lostRes?.items) ? lostRes.items : (Array.isArray(lostRes) ? lostRes : []);
+  const foundList = Array.isArray(foundRes?.items) ? foundRes.items : (Array.isArray(foundRes) ? foundRes : []);
+
+  const combined = [
+    ...lostList.map((item) => ({ ...item, item_type: "lost" })),
+    ...foundList.map((item) => ({ ...item, item_type: "found" })),
   ];
+
+  return {
+    items: combined,
+    total: (lostRes?.total || lostList.length) + (foundRes?.total || foundList.length),
+    total_pages: Math.max(lostRes?.total_pages || 1, foundRes?.total_pages || 1),
+  };
 }
 
 export async function getItem(type, id) {
@@ -39,10 +50,7 @@ export async function getItem(type, id) {
     return getMockItem(type, id);
   }
 
-  const endpoint =
-    type === "lost"
-      ? `/lost-items/${id}`
-      : `/found-items/${id}`;
+  const endpoint = ENDPOINTS.ITEM_DETAIL(type, id);
 
   return api.get(endpoint);
 }
@@ -50,6 +58,20 @@ export async function getItem(type, id) {
 export async function createLostItem(payload) {
   if (USE_MOCK) {
     return createMockLostItem(payload);
+  }
+
+  if (payload instanceof FormData) {
+    return api.upload(ENDPOINTS.LOST_ITEMS, payload);
+  }
+
+  if (payload.image instanceof File) {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        formData.append(key, value);
+      }
+    });
+    return api.upload(ENDPOINTS.LOST_ITEMS, formData);
   }
 
   const body = { ...payload };
@@ -61,6 +83,20 @@ export async function createLostItem(payload) {
 export async function createFoundItem(payload) {
   if (USE_MOCK) {
     return createMockFoundItem(payload);
+  }
+
+  if (payload instanceof FormData) {
+    return api.upload(ENDPOINTS.FOUND_ITEMS, payload);
+  }
+
+  if (payload.image instanceof File) {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        formData.append(key, value);
+      }
+    });
+    return api.upload(ENDPOINTS.FOUND_ITEMS, formData);
   }
 
   const body = { ...payload };

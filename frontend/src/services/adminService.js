@@ -67,23 +67,7 @@ export async function getAdminOverview() {
   }
 
   const data = await api.get(ENDPOINTS.ADMIN_DASHBOARD);
-
-  return {
-    metrics: {
-      totalLost: data.total_lost_items,
-      totalFound: data.total_found_items,
-      totalReports: data.total_lost_items + data.total_found_items,
-      activeReports: null,
-      claimedItems: null,
-      returnedItems: data.total_reclaims,
-      pendingClaims: data.pending_claims,
-      verifiedClaims: null,
-      rejectedClaims: null,
-      recoveryRate: null,
-      totalUsers: data.total_users,
-      totalClaims: data.total_claims,
-    },
-  };
+  return data;
 }
 
 export async function getAdminClaims() {
@@ -112,15 +96,7 @@ export async function getAdminItems() {
     return [...lost, ...found];
   }
 
-  const [lost, found] = await Promise.all([
-    api.get(ENDPOINTS.LOST_ITEMS),
-    api.get(ENDPOINTS.FOUND_ITEMS),
-  ]);
-
-  return [
-    ...lost.map((item) => ({ ...item, id: item.lost_id, type: "lost" })),
-    ...found.map((item) => ({ ...item, id: item.found_id, type: "found" })),
-  ];
+  return api.get(ENDPOINTS.ADMIN_ITEMS);
 }
 
 export async function getAdminMatches() {
@@ -129,7 +105,7 @@ export async function getAdminMatches() {
     return response.data;
   }
 
-  throw new Error("The matches API has not been implemented in FastAPI yet.");
+  return api.get(ENDPOINTS.ADMIN_MATCHES);
 }
 
 export async function adminVerifyClaim(claimId, instructions) {

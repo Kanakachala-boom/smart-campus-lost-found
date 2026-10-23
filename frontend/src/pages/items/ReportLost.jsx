@@ -111,6 +111,7 @@ export function ReportLost() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setSubmitError(null);
 
     const validationErrors = validateForm();
@@ -147,6 +148,18 @@ export function ReportLost() {
       const result = await itemsService.createLostItem(payload);
       setSubmittedItem(result || payload);
     } catch (err) {
+      if (err.data && Array.isArray(err.data.detail)) {
+        const fieldErrors = {};
+        err.data.detail.forEach((d) => {
+          const field = Array.isArray(d.loc) ? d.loc.at(-1) : null;
+          if (field) {
+            fieldErrors[field] = d.msg;
+          }
+        });
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...fieldErrors }));
+        }
+      }
       setSubmitError(
         err.message || "Failed to submit lost item report. Please check your inputs and try again.",
       );
@@ -177,13 +190,13 @@ export function ReportLost() {
               <h2 className="report-success-title">Lost Item Report Submitted</h2>
               <p className="report-success-subtitle">
                 Your report has been recorded in the campus system under ID{" "}
-                <strong>#{submittedItem.lost_item_id || "NEW"}</strong>.
+                <strong>#{submittedItem.lost_item_id || submittedItem.id || "NEW"}</strong>.
               </p>
 
               <div className="report-summary-box">
                 <div className="report-summary-row">
                   <span className="report-summary-label">Item:</span>
-                  <span className="report-summary-value">{submittedItem.item_name}</span>
+                  <span className="report-summary-value">{submittedItem.item_name || submittedItem.title}</span>
                 </div>
                 <div className="report-summary-row">
                   <span className="report-summary-label">Category:</span>
@@ -191,11 +204,11 @@ export function ReportLost() {
                 </div>
                 <div className="report-summary-row">
                   <span className="report-summary-label">Location:</span>
-                  <span className="report-summary-value">{submittedItem.location_lost}</span>
+                  <span className="report-summary-value">{submittedItem.location_lost || submittedItem.location}</span>
                 </div>
                 <div className="report-summary-row">
                   <span className="report-summary-label">Date Lost:</span>
-                  <span className="report-summary-value">{submittedItem.date_lost}</span>
+                  <span className="report-summary-value">{submittedItem.date_lost || submittedItem.date}</span>
                 </div>
                 <div className="report-summary-row">
                   <span className="report-summary-label">Status:</span>

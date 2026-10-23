@@ -14,7 +14,13 @@ export async function getMyReports(userId) {
     return listMockUserReports(userId || 1);
   }
 
-  return api.get(ENDPOINTS.MY_REPORTS);
+  const res = await api.get(ENDPOINTS.MY_REPORTS);
+  if (res && (Array.isArray(res.lost) || Array.isArray(res.found))) {
+    const lost = (res.lost || []).map((i) => ({ ...i, type: "lost", item_type: "lost" }));
+    const found = (res.found || []).map((i) => ({ ...i, type: "found", item_type: "found" }));
+    return [...lost, ...found];
+  }
+  return res;
 }
 
 export default {

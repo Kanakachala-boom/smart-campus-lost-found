@@ -147,3 +147,124 @@ def test_edit_item_reports(client, user_token):
     }, headers=headers_other)
     assert unauth_edit.status_code == 403
 
+
+def test_create_lost_item_json_payload(client, user_token):
+    """Verifies that lost-item reporting accepts application/json payloads."""
+    headers = {"Authorization": f"Bearer {user_token}"}
+    payload = {
+        "item_name": "Navy Blue Laptop Bag",
+        "category": "Bags & Backpacks",
+        "location_lost": "Campus Canteen",
+        "specific_location": "First booth near counter",
+        "date_lost": "2026-10-23",
+        "time_lost": "Afternoon",
+        "description": "Lenovo branded navy blue shoulder laptop bag.",
+        "identifying_marks": "Silver NIE keychain on the zipper",
+        "notify_on_match": True,
+    }
+    res = client.post("/api/lost-items", json=payload, headers=headers)
+    assert res.status_code == 201
+    data = res.json()
+    assert data["item_name"] == "Navy Blue Laptop Bag"
+    assert data["category"] == "Bags & Backpacks"
+    assert data["location_lost"] == "Campus Canteen"
+    assert data["date_lost"] == "2026-10-23"
+    assert data["status"] == "ACTIVE"
+    assert "lost_item_id" in data
+    assert data["lost_item_id"] == data["id"]
+
+
+def test_create_lost_item_missing_item_name(client, user_token):
+    """Verifies that missing item_name triggers 422 validation error."""
+    headers = {"Authorization": f"Bearer {user_token}"}
+    # Test JSON with missing item_name
+    res_json = client.post("/api/lost-items", json={
+        "category": "Bags & Backpacks",
+        "location_lost": "Campus Canteen",
+        "date_lost": "2026-10-23",
+        "description": "Valid description with sufficient characters.",
+    }, headers=headers)
+    assert res_json.status_code == 422
+    errors = res_json.json()["detail"]
+    assert any(err["loc"][-1] == "item_name" for err in errors)
+
+    # Test Form data with missing item_name
+    res_form = client.post("/api/lost-items", data={
+        "category": "Bags & Backpacks",
+        "location_lost": "Campus Canteen",
+        "date_lost": "2026-10-23",
+        "description": "Valid description with sufficient characters.",
+    }, headers=headers)
+    assert res_form.status_code == 422
+    errors_form = res_form.json()["detail"]
+    assert any(err["loc"][-1] == "item_name" for err in errors_form)
+
+
+def test_create_lost_item_missing_required_location_or_date(client, user_token):
+    """Verifies that missing required location or date triggers 422 validation error."""
+    headers = {"Authorization": f"Bearer {user_token}"}
+    # Missing location
+    res_loc = client.post("/api/lost-items", json={
+        "item_name": "Calculus Notes",
+        "category": "Books & Stationery",
+        "date_lost": "2026-10-23",
+        "description": "Spiral bound notebook with mathematics notes.",
+    }, headers=headers)
+    assert res_loc.status_code == 422
+    assert any(err["loc"][-1] == "location_lost" for err in res_loc.json()["detail"])
+
+    # Missing date
+    res_date = client.post("/api/lost-items", json={
+        "item_name": "Calculus Notes",
+        "category": "Books & Stationery",
+        "location_lost": "GJLT-101",
+        "description": "Spiral bound notebook with mathematics notes.",
+    }, headers=headers)
+    assert res_date.status_code == 422
+    assert any(err["loc"][-1] == "date_lost" for err in res_date.json()["detail"])
+
+
+def test_create_lost_item_invalid_request_payload(client, user_token):
+    """Verifies that malformed date or empty strings are rejected with 422/400."""
+    headers = {"Authorization": f"Bearer {user_token}"}
+    # Invalid date format
+    res_invalid_date = client.post("/api/lost-items", json={
+        "item_name": "Stainless Steel Bottle",
+        "category": "Other Items",
+        "location_lost": "Sports Complex",
+        "date_lost": "not-a-date",
+        "description": "Silver hydro flask bottle.",
+    }, headers=headers)
+    assert res_invalid_date.status_code == 422
+
+    # Whitespace-only item_name
+    res_empty_name = client.post("/api/lost-items", json={
+        "item_name": "   ",
+        "category": "Other Items",
+        "location_lost": "Sports Complex",
+        "date_lost": "2026-10-23",
+        "description": "Silver hydro flask bottle.",
+    }, headers=headers)
+    assert res_empty_name.status_code == 422
+    assert any(err["loc"][-1] == "item_name" for err in res_empty_name.json()["detail"])
+
+
+def test_create_lost_item_with_image_upload(client, user_token):
+    """Verifies that multipart report submission with genuine image is accepted."""
+    headers = {"Authorization": f"Bearer {user_token}"}
+    # Create fake 1x1 JPEG with valid magic bytes
+    fake_jpeg = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xff\xdb\x00C\x00\xff\xd9"
+    files = {"image": ("lost_wallet.jpg", io.BytesIO(fake_jpeg), "image/jpeg")}
+    data = {
+        "item_name": "Brown Leather Cardholder",
+        "category": "Wallets & Purses",
+        "location_lost": "Campus Library",
+        "date_lost": "2026-10-22",
+        "description": "Small cardholder with college bus pass inside.",
+    }
+    res = client.post("/api/lost-items", data=data, files=files, headers=headers)
+    assert res.status_code == 201
+    result = res.json()
+    assert result["item_name"] == "Brown Leather Cardholder"
+    assert result["image_url"] is not None
+    assert result["image_url"].startswith("/uploads/")

@@ -13,6 +13,7 @@ from fastapi import (
     File,
     Form,
     Query,
+    Request,
 )
 from sqlalchemy import or_, desc
 from sqlalchemy.orm import Session
@@ -88,13 +89,18 @@ def serialize_lost_item(item: LostItem, current_user: Optional[User] = None) -> 
 
     return {
         "id": item.lost_item_id,
+        "lost_item_id": item.lost_item_id,
         "type": "lost",
         "item_name": item.item_name,
+        "title": item.item_name,
         "category": item.category,
         "location": item.location_lost,
+        "location_lost": item.location_lost,
         "specific_location": item.specific_location,
         "date": item.date_lost,
+        "date_lost": item.date_lost,
         "time": item.time_lost,
+        "time_lost": item.time_lost,
         "description": display_desc,
         "image_url": item.image_url,
         "status": item.status,
@@ -128,13 +134,18 @@ def serialize_found_item(item: FoundItem) -> dict:
 
     return {
         "id": item.found_item_id,
+        "found_item_id": item.found_item_id,
         "type": "found",
         "item_name": item.item_name,
+        "title": item.item_name,
         "category": item.category,
         "location": item.location_found,
+        "location_found": item.location_found,
         "specific_location": item.specific_location,
         "date": item.date_found,
+        "date_found": item.date_found,
         "time": item.time_found,
+        "time_found": item.time_found,
         "description": display_desc,
         "image_url": item.image_url,
         "status": item.status,
@@ -263,42 +274,164 @@ def get_found_item(
         raise HTTPException(status_code=404, detail="Found item report not found.")
     return serialize_found_item(item)
 
+async def _extract_request_payload(
+    request: Request,
+    fallback_data: dict,
+    fallback_image: Optional[UploadFile] = None,
+) -> tuple[dict, Optional[UploadFile]]:
+    """Extracts payload data and optional image from JSON or multipart/form-data."""
+    content_type = request.headers.get("content-type", "").lower()
+    data = dict(fallback_data)
+    image = fallback_image
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                data.update(body)
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Malformed JSON body.",
+            )
+    elif "multipart/form-data" in content_type or "application/x-www-form-urlencoded" in content_type:
+        try:
+            form = await request.form()
+            for k, v in form.items():
+                if isinstance(v, UploadFile) or hasattr(v, "filename"):
+                    if k == "image" and getattr(v, "filename", None):
+                        image = v
+                else:
+                    data[k] = v
+        except Exception:
+            pass
+
+    return data, image
+
+def _parse_report_date(val: Any, field_name: str) -> date:
+    """Parses date from ISO string or datetime.date object with 422 validation."""
+    if isinstance(val, date):
+        return val
+    if isinstance(val, str) and val.strip():
+        try:
+            return date.fromisoformat(val.strip())
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=[{
+                    "loc": ["body", field_name],
+                    "msg": "Input should be a valid date (YYYY-MM-DD)",
+                    "type": "date_from_date_parsing",
+                }],
+            )
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=[{
+            "loc": ["body", field_name],
+            "msg": "Field required",
+            "type": "missing",
+        }],
+    )
+
+def _parse_bool(val: Any, default: bool = True) -> bool:
+    """Safely converts boolean, string, or integer values to bool."""
+    if val is None:
+        return default
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, str):
+        return val.strip().lower() not in ("false", "0", "no", "")
+    return bool(val)
+
 @router.post("/lost-items", status_code=status.HTTP_201_CREATED)
 async def create_lost_item(
-    item_name: str = Form(...),
-    category: str = Form(...),
-    location_lost: str = Form(...),
-    date_lost: date = Form(...),
-    description: str = Form(...),
+    request: Request,
+    item_name: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    location_lost: Optional[str] = Form(None),
+    date_lost: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
     specific_location: Optional[str] = Form(None),
     time_lost: Optional[str] = Form(None),
     identifying_marks: Optional[str] = Form(None),
-    notify_on_match: bool = Form(True),
+    notify_on_match: Optional[Any] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Submits a new lost item report and triggers the intelligent matching engine."""
-    image_url = await process_image_upload(image)
-    desc_clean = description.strip()
-    if identifying_marks and identifying_marks.strip():
-        desc_clean += f"\n[Private Marks: {identifying_marks.strip()}]"
+    """Submits a new lost item report and triggers the intelligent matching engine.
+    Supports both multipart/form-data (with file upload) and application/json payloads,
+    with flexible field synonym mapping (item_name/title/name, location_lost/location, date_lost/date).
+    """
+    form_fallbacks = {
+        k: v for k, v in {
+            "item_name": item_name,
+            "category": category,
+            "location_lost": location_lost,
+            "date_lost": date_lost,
+            "description": description,
+            "specific_location": specific_location,
+            "time_lost": time_lost,
+            "identifying_marks": identifying_marks,
+            "notify_on_match": notify_on_match,
+        }.items() if v is not None
+    }
+    data, uploaded_image = await _extract_request_payload(request, form_fallbacks, image)
+
+    # Resolve field synonyms
+    resolved_name = data.get("item_name") or data.get("title") or data.get("name")
+    resolved_category = data.get("category")
+    resolved_location = data.get("location_lost") or data.get("location") or data.get("lost_location")
+    raw_date = data.get("date_lost") or data.get("date") or data.get("lost_date")
+    resolved_desc = data.get("description")
+
+    errors = []
+    if not resolved_name or not str(resolved_name).strip():
+        errors.append({"loc": ["body", "item_name"], "msg": "Field required", "type": "missing"})
+    if not resolved_category or not str(resolved_category).strip():
+        errors.append({"loc": ["body", "category"], "msg": "Field required", "type": "missing"})
+    if not resolved_location or not str(resolved_location).strip():
+        errors.append({"loc": ["body", "location_lost"], "msg": "Field required", "type": "missing"})
+    if not raw_date:
+        errors.append({"loc": ["body", "date_lost"], "msg": "Field required", "type": "missing"})
+    if not resolved_desc or not str(resolved_desc).strip():
+        errors.append({"loc": ["body", "description"], "msg": "Field required", "type": "missing"})
+
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=errors,
+        )
+
+    parsed_date = _parse_report_date(raw_date, "date_lost")
+    image_url = await process_image_upload(uploaded_image)
+    if not image_url and (data.get("image_url") or data.get("image_path")):
+        image_url = data.get("image_url") or data.get("image_path")
+
+    resolved_specific = data.get("specific_location")
+    resolved_time = data.get("time_lost") or data.get("time") or data.get("lost_time")
+    resolved_marks = data.get("identifying_marks") or data.get("unique_features")
+    resolved_notify = _parse_bool(data.get("notify_on_match"), default=True)
+
+    desc_clean = str(resolved_desc).strip()
+    if resolved_marks and str(resolved_marks).strip():
+        desc_clean += f"\n[Private Marks: {str(resolved_marks).strip()}]"
 
     new_item = LostItem(
         user_id=current_user.user_id,
-        item_name=item_name.strip(),
-        category=category.strip(),
-        location_lost=location_lost.strip(),
-        specific_location=specific_location.strip() if specific_location else None,
-        date_lost=date_lost,
-        time_lost=time_lost.strip() if time_lost else None,
+        item_name=str(resolved_name).strip(),
+        category=str(resolved_category).strip(),
+        location_lost=str(resolved_location).strip(),
+        specific_location=str(resolved_specific).strip() if resolved_specific else None,
+        date_lost=parsed_date,
+        time_lost=str(resolved_time).strip() if resolved_time else None,
         description=desc_clean,
         image_url=image_url,
-        notify_on_match=notify_on_match,
+        notify_on_match=resolved_notify,
         status="ACTIVE",
     )
-    if identifying_marks:
-        new_item.identifying_marks = identifying_marks.strip()
+    if resolved_marks:
+        new_item.identifying_marks = str(resolved_marks).strip()
 
     db.add(new_item)
     db.commit()
@@ -353,40 +486,97 @@ async def create_lost_item(
 
 @router.post("/found-items", status_code=status.HTTP_201_CREATED)
 async def create_found_item(
-    item_name: str = Form(...),
-    category: str = Form(...),
-    location_found: str = Form(...),
-    date_found: date = Form(...),
-    description: str = Form(...),
-    custody_location: str = Form(...),
-    contact_preference: str = Form("Coordinate Handover via Campus Security / Admin"),
+    request: Request,
+    item_name: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    location_found: Optional[str] = Form(None),
+    date_found: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    custody_location: Optional[str] = Form(None),
+    contact_preference: Optional[str] = Form(None),
     specific_location: Optional[str] = Form(None),
     time_found: Optional[str] = Form(None),
-    notify_on_match: bool = Form(True),
+    notify_on_match: Optional[Any] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    image_url = await process_image_upload(image)
-    desc_clean = description.strip()
-    if custody_location and custody_location.strip():
-        desc_clean += f"\n[Custody: {custody_location.strip()}]"
-    if contact_preference and contact_preference.strip():
-        desc_clean += f"\n[Contact: {contact_preference.strip()}]"
+    """Submits a new found item report and triggers the intelligent matching engine.
+    Supports both multipart/form-data and application/json payloads with synonym mapping.
+    """
+    form_fallbacks = {
+        k: v for k, v in {
+            "item_name": item_name,
+            "category": category,
+            "location_found": location_found,
+            "date_found": date_found,
+            "description": description,
+            "custody_location": custody_location,
+            "contact_preference": contact_preference,
+            "specific_location": specific_location,
+            "time_found": time_found,
+            "notify_on_match": notify_on_match,
+        }.items() if v is not None
+    }
+    data, uploaded_image = await _extract_request_payload(request, form_fallbacks, image)
+
+    resolved_name = data.get("item_name") or data.get("title") or data.get("name")
+    resolved_category = data.get("category")
+    resolved_location = data.get("location_found") or data.get("location") or data.get("found_location")
+    raw_date = data.get("date_found") or data.get("date") or data.get("found_date")
+    resolved_desc = data.get("description")
+    resolved_custody = data.get("custody_location") or "Campus Security"
+    resolved_contact = (
+        data.get("contact_preference")
+        or "Coordinate Handover via Campus Security / Admin"
+    )
+
+    errors = []
+    if not resolved_name or not str(resolved_name).strip():
+        errors.append({"loc": ["body", "item_name"], "msg": "Field required", "type": "missing"})
+    if not resolved_category or not str(resolved_category).strip():
+        errors.append({"loc": ["body", "category"], "msg": "Field required", "type": "missing"})
+    if not resolved_location or not str(resolved_location).strip():
+        errors.append({"loc": ["body", "location_found"], "msg": "Field required", "type": "missing"})
+    if not raw_date:
+        errors.append({"loc": ["body", "date_found"], "msg": "Field required", "type": "missing"})
+    if not resolved_desc or not str(resolved_desc).strip():
+        errors.append({"loc": ["body", "description"], "msg": "Field required", "type": "missing"})
+
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=errors,
+        )
+
+    parsed_date = _parse_report_date(raw_date, "date_found")
+    image_url = await process_image_upload(uploaded_image)
+    if not image_url and (data.get("image_url") or data.get("image_path")):
+        image_url = data.get("image_url") or data.get("image_path")
+
+    resolved_specific = data.get("specific_location")
+    resolved_time = data.get("time_found") or data.get("time") or data.get("found_time")
+    resolved_notify = _parse_bool(data.get("notify_on_match"), default=True)
+
+    desc_clean = str(resolved_desc).strip()
+    if resolved_custody and str(resolved_custody).strip():
+        desc_clean += f"\n[Custody: {str(resolved_custody).strip()}]"
+    if resolved_contact and str(resolved_contact).strip():
+        desc_clean += f"\n[Contact: {str(resolved_contact).strip()}]"
 
     new_item = FoundItem(
         user_id=current_user.user_id,
-        item_name=item_name.strip(),
-        category=category.strip(),
-        location_found=location_found.strip(),
-        specific_location=specific_location.strip() if specific_location else None,
-        date_found=date_found,
-        time_found=time_found.strip() if time_found else None,
+        item_name=str(resolved_name).strip(),
+        category=str(resolved_category).strip(),
+        location_found=str(resolved_location).strip(),
+        specific_location=str(resolved_specific).strip() if resolved_specific else None,
+        date_found=parsed_date,
+        time_found=str(resolved_time).strip() if resolved_time else None,
         description=desc_clean,
-        custody_location=custody_location.strip(),
-        contact_preference=contact_preference.strip(),
+        custody_location=str(resolved_custody).strip(),
+        contact_preference=str(resolved_contact).strip(),
         image_url=image_url,
-        notify_on_match=notify_on_match,
+        notify_on_match=resolved_notify,
         status="AVAILABLE",
     )
     db.add(new_item)

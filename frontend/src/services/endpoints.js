@@ -13,11 +13,11 @@ export const ENDPOINTS = {
   ME: "/api/auth/me",
 
   // Lost and found items
-  ITEMS: "/lost-items",
-  LOST_ITEMS: "/lost-items",
-  FOUND_ITEMS: "/found-items",
-  ITEM_DETAIL: (type, id) => `/${type}-items/${id}`,
-  MY_REPORTS: "/users/me/reports",
+  ITEMS: "/api/lost-items",
+  LOST_ITEMS: "/api/lost-items",
+  FOUND_ITEMS: "/api/found-items",
+  ITEM_DETAIL: (type, id) => `/api/${type}-items/${id}`,
+  MY_REPORTS: "/api/users/me/reports",
 
   /* ---- Item Status and Management ---- */
   ITEM_STATUS: (type, id) => `/api/${type}-items/${id}/status`,
@@ -38,9 +38,9 @@ export const ENDPOINTS = {
   RECONCILE_MATCHES: "/api/matches/reconcile",
 
   // Private messages
-  MESSAGES: "/messages",
-  CONVERSATIONS: "/messages/conversations",
-  CONVERSATION: (userId) => `/messages/conversation/${userId}`,
+  MESSAGES: "/api/messages",
+  CONVERSATIONS: "/api/messages/conversations",
+  CONVERSATION: (userId) => `/api/messages/conversation/${userId}`,
 
   /* ---- Proposed In-App Claim-Based Messages ---- */
   CLAIM_MESSAGES: (claimId) => `/api/claims/${claimId}/messages`,
@@ -55,6 +55,12 @@ export const ENDPOINTS = {
   ADMIN_CLAIMS: "/api/admin/claims",
   ADMIN_ITEMS: "/api/admin/items",
   ADMIN_MATCHES: "/api/admin/matches",
+
+  /* ---- Notifications ---- */
+  NOTIFICATIONS: "/api/notifications",
+  NOTIFICATION_UNREAD_COUNT: "/api/notifications/unread-count",
+  NOTIFICATION_READ: (id) => `/api/notifications/${id}/read`,
+  NOTIFICATIONS_READ_ALL: "/api/notifications/read-all",
 };
 
 export default ENDPOINTS;
