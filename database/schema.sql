@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS lost_items (
     lost_date DATE,
     lost_time TIME,
     image_path VARCHAR(255),
-    status ENUM('ACTIVE', 'MATCHED', 'RECLAIMED', 'CLOSED') DEFAULT 'ACTIVE',
+    status VARCHAR(50) DEFAULT 'ACTIVE',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS found_items (
     found_date DATE,
     found_time TIME,
     image_path VARCHAR(255),
-    status ENUM('AVAILABLE', 'CLAIMED', 'RETURNED', 'CLOSED') DEFAULT 'AVAILABLE',
+    status VARCHAR(50) DEFAULT 'AVAILABLE',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS matches (
     found_id INT NOT NULL,
     matching_score DECIMAL(5,2) NOT NULL,
     match_reason TEXT,
-    status ENUM('PENDING', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING',
+    status VARCHAR(50) DEFAULT 'PENDING',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (lost_id) REFERENCES lost_items(lost_id),
     FOREIGN KEY (found_id) REFERENCES found_items(found_id),
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS claims (
     claimant_id INT NOT NULL,
     match_id INT,
     claim_description TEXT,
-    status ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
+    status VARCHAR(50) DEFAULT 'PENDING',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (found_id) REFERENCES found_items(found_id),
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS messages (
     message_id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
-    claim_id INT NOT NULL,
+    claim_id INT,
     message TEXT NOT NULL,
     sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     is_read BOOLEAN DEFAULT FALSE,

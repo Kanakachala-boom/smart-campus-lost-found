@@ -630,6 +630,7 @@ async def create_found_item(
     return serialize_found_item(new_item)
 
 @router.patch("/lost-items/{item_id}")
+@router.patch("/lost-items/{item_id}/status")
 def update_lost_item_status(
     item_id: int,
     payload: ItemStatusUpdateRequest,
@@ -694,6 +695,7 @@ def update_lost_item_details(
     return serialize_lost_item(item, current_user)
 
 @router.patch("/found-items/{item_id}")
+@router.patch("/found-items/{item_id}/status")
 def update_found_item_status(
     item_id: int,
     payload: ItemStatusUpdateRequest,

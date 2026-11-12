@@ -235,7 +235,7 @@ export function MyReports() {
                         >
                           {isLost ? "LOST REPORT" : "FOUND REPORT"}
                         </span>
-                        <span className="my-report-card__meta">#{item.id}</span>
+                        <span className="my-report-card__meta">{isLost ? `#LST-${item.id}` : `#FND-${item.id}`}</span>
                       </div>
 
                       <span className="my-report-card__name">{item.item_name}</span>

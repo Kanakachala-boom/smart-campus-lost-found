@@ -455,7 +455,7 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td>
-                      <strong>{it.item_name}</strong>
+                      <strong>{it.item_name}</strong> <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>({isLost ? `#LST-${it.id}` : `#FND-${it.id}`})</span>
                     </td>
                     <td>{it.category}</td>
                     <td>{it.location}</td>

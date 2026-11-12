@@ -77,7 +77,7 @@ export function ItemCard({ item }) {
       <div className="item-card__body">
         <div className="item-card__header-row">
           <span className="item-card__category">{item.category}</span>
-          <span className="item-card__ref-id">#{item.id}</span>
+          <span className="item-card__ref-id">{isLost ? `#LST-${item.id}` : `#FND-${item.id}`}</span>
         </div>
 
         <h3 className="item-card__title" title={item.item_name}>

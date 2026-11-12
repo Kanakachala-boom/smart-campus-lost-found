@@ -9,7 +9,7 @@ class Message(Base):
     message_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     sender_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     receiver_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, default=1)
-    claim_id = Column(Integer, ForeignKey("claims.claim_id"), nullable=False, index=True)
+    claim_id = Column(Integer, ForeignKey("claims.claim_id"), nullable=True, index=True)
     message = Column(Text, nullable=False)
     sent_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     is_read = Column(Boolean, nullable=False, default=False)

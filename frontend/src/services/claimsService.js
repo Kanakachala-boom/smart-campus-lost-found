@@ -1,4 +1,3 @@
-
 import api, { USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
 import {
@@ -20,9 +19,14 @@ export async function submitClaim(claimData, user) {
     });
   }
 
-  // Backend expects { match_id: number }.
   return api.post(ENDPOINTS.CLAIMS, {
-    match_id: Number(claimData.match_id),
+    found_item_id: Number(claimData.found_item_id || claimData.id),
+    verification_details: claimData.verification_details,
+    lost_date: claimData.lost_date || undefined,
+    lost_location: claimData.lost_location || undefined,
+    claimant_answer: claimData.claimant_answer || undefined,
+    proof_image_url: claimData.proof_image_url || undefined,
+    match_id: claimData.match_id ? Number(claimData.match_id) : undefined,
   });
 }
 
@@ -69,9 +73,9 @@ export async function verifyClaim(claimId, handoverInstructions) {
     return adminVerifyMockClaim(claimId, handoverInstructions);
   }
 
-  // Backend review endpoint accepts APPROVED or REJECTED.
-  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
-    status: "APPROVED",
+  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
+    status: "VERIFIED",
+    handover_instructions: handoverInstructions,
   });
 }
 
@@ -80,8 +84,9 @@ export async function rejectClaim(claimId, rejectionReason) {
     return adminRejectMockClaim(claimId, rejectionReason);
   }
 
-  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
+  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
     status: "REJECTED",
+    rejection_reason: rejectionReason,
   });
 }
 

@@ -4,6 +4,9 @@
  * FASTAPI INTEGRATION:
  * - GET  /api/claims/{claim_id}/messages
  * - POST /api/claims/{claim_id}/messages
+ * - GET  /api/messages/conversations
+ * - GET  /api/messages/conversation/{other_user_id}
+ * - POST /api/messages
  * - GET  /api/found-items/{item_id}/conversation
  * - POST /api/found-items/{item_id}/conversation/messages
  */
@@ -15,19 +18,23 @@ import {
   sendMockClaimMessage,
 } from "./mock/mockMessages";
 
-export async function getClaimMessages(claimId, otherUserId) {
+export async function getClaimMessages(claimId, otherUserId = null) {
   if (USE_MOCK) {
     return listMockClaimMessages(claimId);
   }
 
-  if (!otherUserId) {
-    throw new Error("The conversation user ID is required.");
+  if (claimId) {
+    return api.get(ENDPOINTS.CLAIM_MESSAGES(claimId));
   }
 
-  return api.get(ENDPOINTS.CONVERSATION(otherUserId));
+  if (otherUserId) {
+    return api.get(ENDPOINTS.CONVERSATION(otherUserId));
+  }
+
+  throw new Error("A claim ID or conversation user ID is required.");
 }
 
-export async function sendClaimMessage(claimId, text, user, otherUserId) {
+export async function sendClaimMessage(claimId, text, user = null, otherUserId = null) {
   if (USE_MOCK) {
     return sendMockClaimMessage(
       claimId,
@@ -38,14 +45,20 @@ export async function sendClaimMessage(claimId, text, user, otherUserId) {
     );
   }
 
-  if (!otherUserId) {
-    throw new Error("The recipient user ID is required.");
+  if (claimId) {
+    return api.post(ENDPOINTS.CLAIM_MESSAGES(claimId), {
+      text,
+    });
   }
 
-  return api.post(ENDPOINTS.MESSAGES, {
-    receiver_id: Number(otherUserId),
-    message_text: text,
-  });
+  if (otherUserId) {
+    return api.post(ENDPOINTS.MESSAGES, {
+      receiver_id: Number(otherUserId),
+      text,
+    });
+  }
+
+  throw new Error("A claim ID or recipient user ID is required.");
 }
 
 export async function getMyConversations() {
@@ -54,6 +67,38 @@ export async function getMyConversations() {
   }
 
   return api.get(ENDPOINTS.CONVERSATIONS);
+}
+
+export async function getUserConversation(userId) {
+  if (USE_MOCK) {
+    return [];
+  }
+
+  return api.get(ENDPOINTS.CONVERSATION(userId));
+}
+
+export async function sendMessage(payload) {
+  if (USE_MOCK) {
+    return {
+      message_id: Date.now(),
+      ...payload,
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  return api.post(ENDPOINTS.MESSAGES, {
+    receiver_id: Number(payload.receiver_id || payload.recipient_id),
+    text: payload.text || payload.message || payload.message_text,
+    claim_id: payload.claim_id ? Number(payload.claim_id) : undefined,
+  });
+}
+
+export async function markMessageRead(messageId) {
+  if (USE_MOCK) {
+    return { success: true };
+  }
+
+  return api.patch(`/api/messages/${messageId}/read`);
 }
 
 export async function getFoundItemConversation(foundItemId, claimId = null) {
@@ -84,6 +129,10 @@ export async function sendFoundItemMessage(foundItemId, text, claimId = null) {
 export default {
   getClaimMessages,
   sendClaimMessage,
+  getMyConversations,
+  getUserConversation,
+  sendMessage,
+  markMessageRead,
   getFoundItemConversation,
   sendFoundItemMessage,
 };

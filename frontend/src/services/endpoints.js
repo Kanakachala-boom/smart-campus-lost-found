@@ -1,4 +1,3 @@
-
 /**
  * Central endpoint paths matching the current FastAPI backend.
  * Base URL is configured separately in frontend/.env.
@@ -29,6 +28,7 @@ export const ENDPOINTS = {
   FOUND_ITEM_CLAIMS: (foundItemId) => `/api/found-items/${foundItemId}/claims`,
   VERIFICATION_CHALLENGE: (foundItemId) => `/api/found-items/${foundItemId}/verification-challenge`,
   VERIFY_CLAIM: (claimId) => `/api/claims/${claimId}/verify`,
+  CLAIM_REVIEW: (claimId) => `/api/claims/${claimId}/verify`,
 
   /* ---- Proposed Automated Matching (Stage 6) ---- */
   MY_MATCHES: "/api/matches/my-matches",

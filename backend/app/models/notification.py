@@ -32,6 +32,8 @@ class Notification(Base):
         if explicit:
             return explicit
         if self.type == "POTENTIAL_MATCH":
+            if self.title and "Found Report" in self.title:
+                return f"/items/lost/{self.reference_id}" if self.reference_id else "/matches"
             if self.reference_id:
                 return f"/items/found/{self.reference_id}"
             return "/matches"
@@ -40,8 +42,12 @@ class Notification(Base):
                 return f"/claims/{self.reference_id}"
             return "/my-claims"
         if self.type == "CLAIM_MESSAGE":
+            if getattr(self, "_item_type", None) == "found" or (self.title and any(w in self.title.lower() for w in ("found", "finder"))):
+                return f"/items/found/{self.reference_id}" if self.reference_id else "/matches"
             if self.reference_id:
-                return f"/items/found/{self.reference_id}"
+                return f"/claims/{self.reference_id}/chat"
+            return "/my-claims"
+        if self.type == "NEW_MESSAGE":
             return "/my-claims"
         if self.type == "REPORT_CONFIRMED":
             return "/my-reports"

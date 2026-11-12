@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageSquare,
   Shield,
   ShieldCheck,
   Sparkles,
@@ -156,6 +157,16 @@ export function Navbar() {
           >
             <Sparkles size={15} aria-hidden="true" />
             <span>Matches</span>
+          </NavLink>
+
+          <NavLink
+            to="/messages"
+            className={({ isActive }) =>
+              `app-navbar__link ${isActive ? "app-navbar__link--active" : ""}`
+            }
+          >
+            <MessageSquare size={15} aria-hidden="true" />
+            <span>Messages</span>
           </NavLink>
 
           {isAdmin && (
@@ -372,6 +383,17 @@ export function Navbar() {
             >
               <Sparkles size={18} aria-hidden="true" />
               <span>Potential Matches</span>
+            </NavLink>
+
+            <NavLink
+              to="/messages"
+              className={({ isActive }) =>
+                `app-drawer__link ${isActive ? "app-drawer__link--active" : ""}`
+              }
+              onClick={() => setShowMobileDrawer(false)}
+            >
+              <MessageSquare size={18} aria-hidden="true" />
+              <span>Messages</span>
             </NavLink>
 
             <NavLink

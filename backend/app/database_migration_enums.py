@@ -6,21 +6,26 @@ def run_migration():
     with engine.connect() as conn:
         conn.execute(text("""
             ALTER TABLE lost_items 
-            MODIFY COLUMN status ENUM('ACTIVE','POTENTIAL_MATCH','MATCHED','RECLAIMED','CLOSED','RESOLVED','RETURNED') 
+            MODIFY COLUMN status VARCHAR(50) 
             NOT NULL DEFAULT 'ACTIVE'
         """))
         conn.execute(text("""
             ALTER TABLE found_items 
-            MODIFY COLUMN status ENUM('AVAILABLE','POTENTIAL_MATCH','CLAIMED','RETURNED','CLOSED','RESOLVED','RECLAIMED') 
+            MODIFY COLUMN status VARCHAR(50) 
             NOT NULL DEFAULT 'AVAILABLE'
         """))
         conn.execute(text("""
             ALTER TABLE matches 
-            MODIFY COLUMN status ENUM('PENDING','ACCEPTED','REJECTED','RESOLVED') 
+            MODIFY COLUMN status VARCHAR(50) 
+            NOT NULL DEFAULT 'PENDING'
+        """))
+        conn.execute(text("""
+            ALTER TABLE claims 
+            MODIFY COLUMN status VARCHAR(50) 
             NOT NULL DEFAULT 'PENDING'
         """))
         conn.commit()
-        print("Migration SUCCESS: Updated ENUMs for lost_items, found_items, and matches.")
+        print("Migration SUCCESS: Updated status columns to VARCHAR(50) for lost_items, found_items, matches, and claims.")
 
 if __name__ == "__main__":
     run_migration()

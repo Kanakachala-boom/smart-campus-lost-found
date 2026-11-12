@@ -289,7 +289,7 @@ export function ItemDetail() {
             </Link>
             <span className="item-detail-divider" aria-hidden="true">/</span>
             <span className="item-detail-crumb">
-              {isLost ? "Lost Item" : "Found Item"} #{item.id}
+              {isLost ? "Lost Item" : "Found Item"} {isLost ? `#LST-${item.id}` : `#FND-${item.id}`}
             </span>
           </div>
 
@@ -413,7 +413,8 @@ export function ItemDetail() {
                           }`}
                         >
                           <span className="item-detail-chat-bubble__sender">
-                            {isMine ? "You" : (msg.sender_name || "Counterpart")}
+                            {isMine ? "You" : (msg.sender_name || "Counterpart")} ({msg.sender_role || "STUDENT"})
+                            {msg.receiver_name && ` → to ${msg.receiver_name} (${msg.receiver_role || "STUDENT"})`}
                           </span>
                           <span className="item-detail-chat-bubble__text">{msg.text || msg.content}</span>
                           <span className="item-detail-chat-bubble__time">
@@ -464,7 +465,7 @@ export function ItemDetail() {
                 </div>
 
                 <h1 className="item-detail-title">{item.item_name}</h1>
-                <span className="item-detail-ref-text">Registry Reference: #{item.id}</span>
+                <span className="item-detail-ref-text">Registry Reference: {isLost ? `#LST-${item.id}` : `#FND-${item.id}`}</span>
               </div>
 
               {/* Attributes Table */}

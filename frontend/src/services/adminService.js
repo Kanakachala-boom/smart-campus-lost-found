@@ -1,4 +1,3 @@
-
 import api, { USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
 import {
@@ -114,8 +113,9 @@ export async function adminVerifyClaim(claimId, instructions) {
     return response.data;
   }
 
-  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
-    status: "APPROVED",
+  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
+    status: "VERIFIED",
+    handover_instructions: instructions,
   });
 }
 
@@ -125,8 +125,9 @@ export async function adminRejectClaim(claimId, reason) {
     return response.data;
   }
 
-  return api.patch(ENDPOINTS.CLAIM_REVIEW(claimId), {
+  return api.post(ENDPOINTS.VERIFY_CLAIM(claimId), {
     status: "REJECTED",
+    rejection_reason: reason,
   });
 }
 
@@ -136,9 +137,7 @@ export async function adminUpdateItemStatus(type, id, status) {
     return response.data;
   }
 
-  throw new Error(
-    "The admin item-status update endpoint has not been implemented in FastAPI."
-  );
+  return api.patch(ENDPOINTS.ITEM_STATUS(type, id), { status });
 }
 
 export default {

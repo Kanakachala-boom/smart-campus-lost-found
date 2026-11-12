@@ -122,10 +122,10 @@ export function ClaimChat() {
             <div className="claim-chat-header">
               <div>
                 <h1 className="claim-chat-header__title">
-                  {claim.item?.item_name || "Claim Verification"}
+                  {claim.item?.item_name || claim.found_item_name || "Claim Verification"}
                 </h1>
                 <span className="claim-chat-header__sub">
-                  Claim #{claim.claim_id} • Status: {claim.status} • Custody: {claim.item?.custody_location || "Campus Security"}
+                  Claim #CLM-{claim.claim_id} • Status: {claim.status} • Custody: {claim.item?.custody_location || "Campus Security"}
                 </span>
               </div>
               <ShieldCheck size={24} color="var(--color-primary)" />
@@ -153,10 +153,19 @@ export function ClaimChat() {
                       key={msg.message_id}
                       className={`chat-bubble ${isMine ? "chat-bubble--mine" : "chat-bubble--other"}`}
                     >
-                      <span className="chat-bubble__sender">{msg.sender_name}</span>
+                      <div className="chat-bubble__meta-header">
+                        <span className="chat-bubble__sender">
+                          {msg.sender_name} <span className="chat-bubble__role-tag">({msg.sender_role || "STUDENT"})</span>
+                        </span>
+                        {msg.receiver_name && (
+                          <span className="chat-bubble__recipient-tag">
+                            → to {msg.receiver_name} ({msg.receiver_role || "STUDENT"})
+                          </span>
+                        )}
+                      </div>
                       <span className="chat-bubble__text">{msg.text}</span>
                       <span className="chat-bubble__time">
-                        {msg.created_at?.split(" ")[1]?.substring(0, 5) || "Just now"}
+                        {msg.created_at?.includes("T") ? new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : (msg.created_at?.split(" ")[1]?.substring(0, 5) || "Just now")}
                       </span>
                     </div>
                   );

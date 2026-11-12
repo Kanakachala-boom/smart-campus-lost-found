@@ -21,6 +21,8 @@ def serialize_claim(claim: Claim) -> dict:
     if found_item:
         item_dict = {
             "id": found_item.found_item_id,
+            "found_item_id": found_item.found_item_id,
+            "type": "found",
             "user_id": found_item.user_id,
             "item_name": found_item.item_name,
             "category": found_item.category,
@@ -36,6 +38,9 @@ def serialize_claim(claim: Claim) -> dict:
         "found_item_id": claim.found_item_id,
         "claimant_user_id": claim.claimant_user_id,
         "claimant_name": claim.claimant.name if claim.claimant else "Student",
+        "found_item_name": found_item.item_name if found_item else None,
+        "item": item_dict,
+        "found_item": item_dict,
         "status": claim.status,
         "verification_details": claim.verification_details,
         "lost_date": claim.lost_date,
@@ -90,6 +95,7 @@ def submit_claim(
         status="PENDING",
     )
     db.add(new_claim)
+    db.flush()
 
     # Update item status to CLAIMED
     found_item.status = "CLAIMED"
@@ -100,6 +106,7 @@ def submit_claim(
         type="CLAIM_SUBMITTED",
         title="Claim Submitted on Found Item",
         message=f"An ownership claim has been submitted for '{found_item.item_name}'. Campus authorities are reviewing verification marks.",
+        reference_id=new_claim.claim_id,
         item_id=found_item.found_item_id,
         item_type="found",
         target_url="/my-reports",
@@ -113,9 +120,10 @@ def submit_claim(
         type="CLAIM_SUBMITTED",
         title="Ownership Claim Registered",
         message=f"Your claim for '{found_item.item_name}' was registered. You will be notified once authorities review the verification marks.",
+        reference_id=new_claim.claim_id,
         item_id=found_item.found_item_id,
         item_type="found",
-        target_url="/my-claims",
+        target_url=f"/claims/{new_claim.claim_id}",
         is_read=False,
     )
     db.add(claimant_notif)
@@ -249,8 +257,9 @@ def verify_claim(
             type="CLAIM_VERIFIED",
             title="Ownership Claim Verified",
             message=f"Your claim for '{found_item.item_name if found_item else 'Item'}' has been approved! {claim.handover_instructions}",
+            reference_id=claim.claim_id,
             item_id=claim.found_item_id,
-            item_type="found",
+            item_type="claim",
             target_url=f"/claims/{claim.claim_id}",
             is_read=False,
         )
@@ -293,8 +302,9 @@ def verify_claim(
             type="CLAIM_REJECTED",
             title="Claim Verification Update",
             message=f"Your claim for '{found_item.item_name if found_item else 'Item'}' could not be verified: {claim.rejection_reason}",
+            reference_id=claim.claim_id,
             item_id=claim.found_item_id,
-            item_type="found",
+            item_type="claim",
             target_url=f"/claims/{claim.claim_id}",
             is_read=False,
         )

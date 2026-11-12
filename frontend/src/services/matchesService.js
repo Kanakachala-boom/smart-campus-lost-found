@@ -1,4 +1,3 @@
-
 import api, { USE_MOCK } from "./api";
 import ENDPOINTS from "./endpoints";
 import {
@@ -13,9 +12,7 @@ export async function getMyMatches(userId) {
     return listMockUserMatches(userId || 1);
   }
 
-  throw new Error(
-    "GET /matches/my-matches is not implemented in the FastAPI backend yet."
-  );
+  return api.get(ENDPOINTS.MY_MATCHES);
 }
 
 export async function getItemMatches(type, itemId) {
@@ -23,9 +20,8 @@ export async function getItemMatches(type, itemId) {
     return getMockItemMatches(type, itemId);
   }
 
-  throw new Error(
-    "Item matching endpoints are not implemented in the FastAPI backend yet."
-  );
+  const endpoint = type === "lost" ? ENDPOINTS.LOST_MATCHES(itemId) : ENDPOINTS.FOUND_MATCHES(itemId);
+  return api.get(endpoint);
 }
 
 export async function updateMatchStatus(matchId, status) {
@@ -33,9 +29,7 @@ export async function updateMatchStatus(matchId, status) {
     return updateMockMatchStatus(matchId, status);
   }
 
-  throw new Error(
-    "PATCH /matches/{id}/status is not implemented in the FastAPI backend yet."
-  );
+  return api.patch(ENDPOINTS.UPDATE_MATCH_STATUS(matchId), { status });
 }
 
 export async function getAllMatches() {
@@ -43,9 +37,7 @@ export async function getAllMatches() {
     return listAllMockMatches();
   }
 
-  throw new Error(
-    "GET /admin/matches is not implemented in the FastAPI backend yet."
-  );
+  return api.get(ENDPOINTS.ADMIN_MATCHES);
 }
 
 export async function reconcileMatches() {

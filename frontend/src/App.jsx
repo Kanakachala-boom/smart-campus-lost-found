@@ -26,6 +26,7 @@ import ClaimPage from "./pages/claims/ClaimPage";
 import MyClaims from "./pages/claims/MyClaims";
 import ClaimDetail from "./pages/claims/ClaimDetail";
 import ClaimChat from "./pages/chat/ClaimChat";
+import MessagesHub from "./pages/chat/MessagesHub";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
 import useAuth from "./hooks/useAuth";
 import { ErrorState, LoadingState } from "./components/common/StateViews";
@@ -192,6 +193,16 @@ export function App() {
                 element={
                   <ProtectedRoute>
                     <ClaimChat />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Private Messaging & Support Hub */}
+              <Route
+                path="/messages"
+                element={
+                  <ProtectedRoute>
+                    <MessagesHub />
                   </ProtectedRoute>
                 }
               />
