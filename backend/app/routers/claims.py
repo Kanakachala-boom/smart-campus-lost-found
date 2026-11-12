@@ -128,6 +128,30 @@ def submit_claim(
     )
     db.add(claimant_notif)
 
+    # Multi-channel notification: Email alerts
+    try:
+        from app.services.email_service import send_claim_alert_email
+        if found_item.reporter and found_item.reporter.email:
+            send_claim_alert_email(
+                to_email=found_item.reporter.email,
+                recipient_name=found_item.reporter.name,
+                item_name=found_item.item_name,
+                claim_id=new_claim.claim_id,
+                status="SUBMITTED",
+                notes="An ownership claim has been submitted for this found item."
+            )
+        if current_user.email:
+            send_claim_alert_email(
+                to_email=current_user.email,
+                recipient_name=current_user.name,
+                item_name=found_item.item_name,
+                claim_id=new_claim.claim_id,
+                status="REGISTERED",
+                notes="Your claim has been registered and is awaiting verification review."
+            )
+    except Exception:
+        pass
+
     db.commit()
     db.refresh(new_claim)
     return serialize_claim(new_claim)

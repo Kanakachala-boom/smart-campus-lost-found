@@ -381,6 +381,22 @@ def evaluate_and_store_match(db: Session, lost: LostItem, found: FoundItem) -> O
             )
             db.add(notif_found)
 
+            # Email notification for found item reporter
+            if found.user:
+                try:
+                    from app.services.email_service import send_match_alert_email
+                    send_match_alert_email(
+                        to_email=found.user.email,
+                        recipient_name=found.user.name,
+                        lost_item_name=lost.item_name,
+                        found_item_name=found.item_name,
+                        match_score=score,
+                        confidence=confidence,
+                        target_url=f"/items/lost/{lost.lost_item_id}"
+                    )
+                except Exception:
+                    pass
+
     db.commit()
     db.refresh(new_match)
     return new_match

@@ -16,8 +16,14 @@ from app.config import (
 logger = logging.getLogger("smart_campus.email")
 
 def is_smtp_configured() -> bool:
-    """Returns True only if an SMTP server hostname has been configured."""
-    return bool(SMTP_HOST and SMTP_HOST.strip())
+    """Returns True only if valid non-placeholder SMTP configuration is present."""
+    if not (SMTP_HOST and SMTP_HOST.strip()):
+        return False
+    # Check for unconfigured dummy/placeholder credentials
+    placeholders = ("your_nie_email@nie.ac.in", "your_email_app_password", "user@example.com", "password")
+    if (SMTP_USERNAME in placeholders) or (SMTP_PASSWORD in placeholders):
+        return False
+    return True
 
 def send_password_reset_email(to_email: str, recipient_name: str, reset_link: str) -> None:
     """
