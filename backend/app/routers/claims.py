@@ -221,8 +221,9 @@ def verify_claim(
     found_item = claim.found_item
     is_admin = current_user.role == "ADMIN"
     is_finder = found_item and found_item.user_id == current_user.user_id
+    is_claimant = claim.claimant_user_id == current_user.user_id
 
-    if not (is_admin or is_finder):
+    if not (is_admin or is_finder or is_claimant):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to verify this claim.",

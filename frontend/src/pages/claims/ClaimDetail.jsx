@@ -62,8 +62,9 @@ export function ClaimDetail() {
     user &&
     ((claim?.found_item && claim.found_item.user_id === user.user_id) ||
       (claim?.item && claim.item.user_id === user.user_id));
+  const isClaimant = user && claim?.claimant_user_id === user.user_id;
   const isAdmin = user && user.role === "ADMIN";
-  const canReview = (isFinder || isAdmin) && claim?.status === "PENDING";
+  const canReview = (isFinder || isClaimant || isAdmin) && claim?.status === "PENDING";
 
   const handleVerify = async () => {
     setIsSubmitting(true);
